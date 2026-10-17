@@ -26,5 +26,5 @@ export const BOTTOM_NAV: readonly NavItemConfig[] = [
   SETTINGS_NAV,
 ]
 
-/** Number of tags listed in the sidebar before "more" (the rest stay reachable via filters). */
-export const SIDEBAR_TAG_LIMIT = 15
+/** Number of (most used) tags listed in the sidebar before "Show all". */
+export const SIDEBAR_TAG_LIMIT = 8

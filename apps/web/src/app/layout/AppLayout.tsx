@@ -1,7 +1,9 @@
-import { Outlet } from 'react-router'
+import { Outlet, useLocation } from 'react-router'
+import { m } from 'motion/react'
 import { useBreakpoint } from '@/hooks/use-media-query'
 import { LibraryProvider } from '@/features/library/LibraryProvider'
 import { SnippetEditorProvider } from '@/features/snippets/editor/SnippetEditorProvider'
+import { TRANSITION } from '@/lib/motion'
 import { BottomNav } from './BottomNav'
 import { MobileHeader } from './MobileHeader'
 import { NewSnippetFab } from './NewSnippetFab'
@@ -17,6 +19,7 @@ import { Sidebar } from './Sidebar'
 export function AppLayout() {
   const breakpoint = useBreakpoint()
   const isMobile = breakpoint === 'mobile'
+  const location = useLocation()
 
   return (
     <LibraryProvider>
@@ -45,11 +48,21 @@ export function AppLayout() {
             <main
               id="main"
               tabIndex={-1}
-              className="flex-1 px-4 pt-5 pb-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom)+6rem)] outline-none sm:px-6 md:px-8 md:pt-8 md:pb-12"
+              className="flex-1 px-4 pt-5 pb-[calc(var(--bottom-nav-height)+env(safe-area-inset-bottom)+6rem)] outline-none sm:px-6 md:px-8 md:pt-8 md:pb-12 2xl:px-12 2xl:pt-10"
             >
-              <div className="mx-auto w-full max-w-7xl">
+              {/*
+                No max-width: content uses the full width on large monitors (grids are fluid).
+                Reading/form pages constrain themselves. Keyed fade gives a subtle page transition
+                without delaying navigation (no exit animation to wait for).
+              */}
+              <m.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={TRANSITION.base}
+              >
                 <Outlet />
-              </div>
+              </m.div>
             </main>
           </div>
         </div>

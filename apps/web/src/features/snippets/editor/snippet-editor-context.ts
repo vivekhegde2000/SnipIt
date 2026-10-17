@@ -8,6 +8,8 @@ export type SnippetEditorApi = {
   /** Opens the editor for a new snippet, optionally pre-filled (e.g. current collection). */
   openCreate: (defaults?: Partial<SnippetFormValues>) => void
   openEdit: (snippetId: string) => void
+  /** Warm the editor on user intent (hover / focus of a trigger). Safe to call repeatedly. */
+  preload: () => void
 }
 
 export const SnippetEditorContext = createContext<SnippetEditorApi | null>(null)

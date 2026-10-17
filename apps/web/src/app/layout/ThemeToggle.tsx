@@ -1,3 +1,4 @@
+import { AnimatePresence, m } from 'motion/react'
 import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,6 +12,7 @@ import {
 import { useTheme } from '@/app/theme/theme-context'
 import { THEME_OPTIONS } from '@/app/theme/theme-options'
 import { isTheme } from '@/app/theme/theme-storage'
+import { TRANSITION } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 type ThemeToggleProps = {
@@ -29,10 +31,21 @@ export function ThemeToggle({ className, align = 'end', side = 'bottom' }: Theme
         <Button
           variant="ghost"
           size="icon"
-          className={cn('size-10 lg:size-9', className)}
+          className={cn('overflow-hidden', className)}
           aria-label="Change theme"
         >
-          <CurrentIcon className="size-[18px]" aria-hidden="true" />
+          <AnimatePresence mode="wait" initial={false}>
+            <m.span
+              key={resolvedTheme}
+              initial={{ rotate: -90, scale: 0.5, opacity: 0 }}
+              animate={{ rotate: 0, scale: 1, opacity: 1 }}
+              exit={{ rotate: 90, scale: 0.5, opacity: 0 }}
+              transition={TRANSITION.fast}
+              className="grid place-items-center"
+            >
+              <CurrentIcon className="size-[18px]" aria-hidden="true" />
+            </m.span>
+          </AnimatePresence>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} side={side} className="w-40">

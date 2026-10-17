@@ -1,11 +1,11 @@
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
 import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror'
-import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
-import { languages } from '@codemirror/language-data'
+import type { Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import type { LanguageId } from '@snipit/shared'
-import { CODEMIRROR_LANGUAGE_NAMES } from './code-languages'
+import { loadLanguage } from './code-languages'
 import { editorHighlighting, editorTheme } from './code-editor-theme'
+import { EDITOR_HEIGHT } from './editor-constants'
 
 export type CodeEditorHandle = { focus: () => void }
 
@@ -18,25 +18,23 @@ export type CodeEditorProps = {
   ariaLabel?: string
   ariaDescribedBy?: string
   invalid?: boolean
-  minHeight?: string
-  maxHeight?: string
+  /** Fixed height (content scrolls inside). Defaults to the `--editor-height` set by the container. */
+  height?: string
   ref?: Ref<CodeEditorHandle>
 }
 
-type LoadedLanguage = { id: LanguageId; support: LanguageSupport }
+type LoadedLanguage = { id: LanguageId; support: Extension }
 
-/** Loads (and caches, via CodeMirror) the grammar for `language`. */
-function useLanguageSupport(language: LanguageId): LanguageSupport | null {
+/** Loads (and caches) the grammar for `language`. */
+function useLanguageSupport(language: LanguageId): Extension | null {
   const [loaded, setLoaded] = useState<LoadedLanguage | null>(null)
 
   useEffect(() => {
-    const name = CODEMIRROR_LANGUAGE_NAMES[language]
-    const description = name ? LanguageDescription.matchLanguageName(languages, name, false) : null
-    if (!description) return
+    const pending = loadLanguage(language)
+    if (!pending) return
 
     let cancelled = false
-    description
-      .load()
+    pending
       .then((support) => {
         if (!cancelled) setLoaded({ id: language, support })
       })
@@ -61,8 +59,7 @@ export function CodeEditor({
   ariaLabel = 'Code editor',
   ariaDescribedBy,
   invalid,
-  minHeight = '180px',
-  maxHeight = 'min(50dvh, 480px)',
+  height = EDITOR_HEIGHT,
   ref,
 }: CodeEditorProps) {
   const editorRef = useRef<ReactCodeMirrorRef>(null)
@@ -86,14 +83,15 @@ export function CodeEditor({
   return (
     <CodeMirror
       ref={editorRef}
+      // Root fills its container so a percentage `height` (e.g. 100% on desktop) resolves.
+      className="h-full"
       value={value}
       onChange={onChange}
       onBlur={onBlur}
       theme={editorTheme}
       extensions={extensions}
       placeholder={placeholder}
-      minHeight={minHeight}
-      maxHeight={maxHeight}
+      height={height}
       // Tab moves focus (keyboard accessibility inside dialogs) instead of inserting a tab.
       indentWithTab={false}
       basicSetup={{

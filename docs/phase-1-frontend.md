@@ -416,7 +416,7 @@ Each PR gets an automatic **deploy preview** URL.
 - [x] React Router routes + layout + route error page + 404
 - [x] `packages/shared`: zod schemas for Snippet, Collection, Settings, Backup envelope; tag normalization; ids
 - [x] Dexie DB + repositories (validated writes, transactions) + `LibraryProvider` (one live query shared by the app)
-- [x] Sample data loader (for development and the empty state)
+- [x] ~~Sample data loader~~ (built on Day 1, removed in Day 1.5 at the reviewer's request)
 - [x] `SnippetEditorDialog` (react-hook-form + zod, lazy CodeMirror, `TagInput`, language and collection selects, `Mod+S` save, discard guard)
 
 **Also delivered on Day 1 (ahead of plan):** basic `SnippetCard`/`SnippetGrid`, tag filter via `?tags=`,
@@ -427,16 +427,35 @@ and idle-time preloading of the lazy editor.
 - `next-themes` was replaced by a small custom `ThemeProvider` plus an inline script in `index.html` (no flash of the wrong theme in a Vite SPA).
 - IndexedDB can't index `null` or booleans, so `deletedAt`/`isFavorite` are filtered in memory. The whole library is loaded once by `LibraryProvider` anyway (fuzzy search needs it in memory).
 - `recordCopy` doesn't bump `updatedAt`, so usage stats never win a Phase 2 sync conflict against a real edit.
-- Bundle: the initial app chunk is ~22 KB gzipped plus cacheable vendor chunks (React, data, UI). CodeMirror and the editor form load on demand.
+- Bundle (after Day 1.5): app chunk ~60 KB gzipped (includes the editor form, so it opens instantly) plus cacheable vendor chunks (React, data, UI). CodeMirror (~35 KB + grammars) and Motion's feature bundle (~32 KB) load lazily.
+
+### Day 1.5 — Review feedback ✅
+Feedback from the Day 1 review, and what changed. Items that were already part of the Day 2 plan
+were deliberately left for Day 2 (see below).
+
+| Feedback | Resolution |
+|---|---|
+| Editor opens late, interactions not smooth | Editor dialog moved into the main bundle; CodeMirror preloaded after first paint and on hover/focus, mounted one frame after the dialog (no layout jump). Dev: all lazy deps pre-bundled (`optimizeDeps.include`) so Vite never re-optimizes/reloads on first use. Removed full-screen backdrop blur. Cards/buttons transition only cheap properties; hover shadow fades on a pseudo-element. Skeletons appear only after 200 ms. |
+| No subtle animations | Motion (`motion/react`, lazy features, `strict`, reduced-motion aware) with shared tokens in `lib/motion.ts`: staggered card entrance + reflow, sliding active indicator (sidebar, bottom nav, theme picker), page fade, tag chip pop, favorite pop, theme icon swap, FAB spring, 200 ms dialog zoom/slide, full drawer slide, shimmer skeletons. |
+| Wasted space on large monitors | Removed the 1280 px cap; fluid `auto-fill` grids (1 col phone → 6 cols at 2560 px); larger padding on `2xl`. |
+| Remove "load defaults" | Sample data removed completely (seed code deleted); new first-run welcome screen. |
+| Components look basic | Consistent sizes in the base components (36 px, 40–44 px on touch via `pointer-coarse`); two-column desktop editor (large code area + details panel); favorite switch; sidebar shows top 8 tags + "Show all"; richer empty states. |
+| (found during review) | `=>`/`<=` were rendered as ligatures (⇒/≤) — disabled so code shows exactly what is copied; welcome screen lacked an `h1`; legacy grammars (Shell/PowerShell) now coloured. |
+
+Also added: **Settings → Danger zone → Delete all data** (type `DELETE` to confirm), pulled forward from Day 3.
+
+Measured click → next paint (Event Timing API, production build): open editor 40–80 ms, close 24–32 ms,
+navigation 24–32 ms. Dev mode was 520–650 ms for the first open before the fix.
 
 ### Day 2 — Core features
 - [ ] `SnippetCard` + `SnippetGrid`: add syntax-highlighted preview (basic cards done on Day 1)
-- [ ] `SnippetDetail` panel/dialog
-- [ ] `CopyButton` + `useCopySnippet` (clipboard fallback, toast, copy stats)
-- [ ] Actions menu: edit, duplicate, favorite, move to collection, export, delete with Undo
+- [ ] **Card quick actions** (review feedback): **Copy** button and **favorite** star directly on the card, plus `⋯` menu
+- [ ] `SnippetDetail` panel/dialog — **clicking a card opens the detail view** (decided in review); Edit from there
+- [ ] `CopyButton` + `useCopySnippet` (clipboard fallback, check-mark animation, toast, copy stats)
+- [ ] Actions menu: edit, duplicate, favorite, move to collection, export, delete with Undo (exit animation already in place)
 - [ ] Search (Fuse.js) + `FilterBar` (collection, tags, language, favorites) + sort, synced to the URL
-- [ ] Collections CRUD + sidebar list with counts; tags list with counts
-- [ ] Command palette (`Mod+K`) + shortcut registry + list keyboard navigation + `?` cheat sheet
+- [ ] **Collections CRUD with obvious entry points** (review feedback): "+" next to COLLECTIONS in the sidebar, "New collection" on the Collections page, "+ New collection…" inside the editor's Collection select; rename / recolour / delete via `⋯`
+- [ ] Command palette (`Mod+K`) + shortcut registry + list keyboard navigation + `?` cheat sheet (then restore `N` hints in the UI)
 
 ### Day 3 — Polish and ship
 - [ ] Export / Import (preview, merge/replace, error handling) in Settings

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Star } from 'lucide-react'
+import { m } from 'motion/react'
+import { Loader2, Star, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DEFAULT_LANGUAGE,
@@ -22,7 +23,9 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { getErrorMessage, snippetRepository } from '@/db'
 import { useLibrary } from '@/features/library/library-context'
+import { formatRelativeTime } from '@/lib/dates'
 import { describedBy, fieldIds } from '@/lib/field-ids'
+import { TRANSITION } from '@/lib/motion'
 import { isModKey } from '@/lib/platform'
 import { cn } from '@/lib/utils'
 import { CollectionSelect } from './CollectionSelect'
@@ -48,9 +51,56 @@ const EMPTY_VALUES: SnippetFormValues = {
   isFavorite: false,
 }
 
+const IDS = {
+  title: 'snippet-title',
+  description: 'snippet-description',
+  language: 'snippet-language',
+  collection: 'snippet-collection',
+  content: 'snippet-content',
+  tags: 'snippet-tags',
+  favorite: 'snippet-favorite',
+} as const
+
 function valuesFromSnippet(snippet: Snippet): SnippetFormValues {
   const { title, content, description, language, tags, collectionId, isFavorite } = snippet
   return { title, content, description, language, tags, collectionId, isFavorite }
+}
+
+/** Accessible favorite switch with a small "pop" when it turns on. */
+function FavoriteToggle({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
+  return (
+    <button
+      id={IDS.favorite}
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        'flex w-full items-center gap-3 rounded-xl border bg-background px-3 py-2.5 text-left transition-[border-color,background-color] duration-150',
+        'hover:border-foreground/20 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
+        checked && 'border-favorite/50 bg-favorite/8 hover:border-favorite/60',
+      )}
+    >
+      <m.span
+        key={String(checked)}
+        initial={checked ? { scale: 0.4, rotate: -30 } : false}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={TRANSITION.pop}
+        className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted"
+      >
+        <Star
+          className={cn('size-[18px]', checked ? 'fill-favorite text-favorite' : 'text-muted-foreground')}
+          aria-hidden="true"
+        />
+      </m.span>
+      <span className="min-w-0">
+        <span className="block text-sm font-medium">Favorite</span>
+        <span className="block text-xs text-muted-foreground">
+          {checked ? 'Shown in your Favorites' : 'Pin it to your Favorites'}
+        </span>
+      </span>
+    </button>
+  )
 }
 
 export function SnippetEditorDialog({ request, open, onClose, defaultLanguage }: SnippetEditorDialogProps) {
@@ -122,14 +172,6 @@ export function SnippetEditorDialog({ request, open, onClose, defaultLanguage }:
 
   const isEdit = request.mode === 'edit'
   const tagSuggestions = tags.map((t) => t.tag)
-  const ids = {
-    title: 'snippet-title',
-    description: 'snippet-description',
-    language: 'snippet-language',
-    collection: 'snippet-collection',
-    content: 'snippet-content',
-    tags: 'snippet-tags',
-  }
 
   return (
     <>
@@ -139,9 +181,13 @@ export function SnippetEditorDialog({ request, open, onClose, defaultLanguage }:
           aria-describedby={undefined}
           className={cn(
             'flex flex-col gap-0 overflow-hidden p-0',
-            // Full-screen sheet on phones, centred dialog from `sm` up.
+            // Phones: full-screen sheet that slides up.
             'h-dvh max-h-dvh w-full max-w-none rounded-none',
+            'max-sm:data-open:zoom-in-100 max-sm:data-open:slide-in-from-bottom-8 max-sm:data-closed:zoom-out-100 max-sm:data-closed:slide-out-to-bottom-8',
+            // Tablets: centred, single column, body scrolls.
             'sm:h-auto sm:max-h-[min(92dvh,880px)] sm:max-w-2xl sm:rounded-2xl',
+            // Desktop: wide two-column editor with a fixed height (the code editor fills it).
+            'lg:h-[min(88dvh,820px)] lg:max-h-none lg:max-w-[min(1160px,calc(100vw-4rem))]',
           )}
         >
           <form
@@ -153,174 +199,188 @@ export function SnippetEditorDialog({ request, open, onClose, defaultLanguage }:
             {/* Header */}
             <div className="flex items-center gap-3 border-b px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 sm:px-6 sm:pt-4">
               <div className="min-w-0 flex-1">
-                <DialogTitle className="text-lg font-semibold">
+                <DialogTitle className="text-lg font-semibold tracking-tight">
                   {isEdit ? 'Edit snippet' : 'New snippet'}
                 </DialogTitle>
-                <DialogDescription className="sr-only">
-                  {isEdit
-                    ? 'Update the details of this snippet.'
-                    : 'Save a reusable snippet to your library.'}
+                <DialogDescription className="mt-0.5 text-xs">
+                  {editing
+                    ? `Last edited ${formatRelativeTime(editing.updatedAt)}`
+                    : 'Save something you reuse — a command, query or message.'}
                 </DialogDescription>
               </div>
-              <Controller
-                control={control}
-                name="isFavorite"
-                render={({ field }) => (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-10 sm:size-9"
-                    aria-pressed={field.value}
-                    aria-label={field.value ? 'Remove from favorites' : 'Add to favorites'}
-                    onClick={() => field.onChange(!field.value)}
-                  >
-                    <Star
-                      className={cn('size-5', field.value && 'fill-favorite text-favorite')}
-                      aria-hidden="true"
-                    />
-                  </Button>
-                )}
-              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Close"
+                onClick={requestClose}
+                disabled={isSubmitting}
+              >
+                <X aria-hidden="true" />
+              </Button>
             </div>
 
-            {/* Body */}
-            <div className="flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
-              <FormField id={ids.title} label="Title" error={errors.title?.message}>
-                <Input
-                  id={ids.title}
-                  placeholder="e.g. Undo last commit"
-                  autoComplete="off"
-                  maxLength={LIMITS.titleMax}
-                  autoFocus={!isEdit}
-                  aria-invalid={!!errors.title || undefined}
-                  aria-describedby={describedBy(ids.title, { error: errors.title })}
-                  className="h-10 sm:h-9"
-                  {...register('title')}
-                />
-              </FormField>
-
-              <FormField
-                id={ids.description}
-                label="Description"
-                optional
-                error={errors.description?.message}
-              >
-                <Textarea
-                  id={ids.description}
-                  rows={2}
-                  placeholder="What is it for? When do you use it?"
-                  maxLength={LIMITS.descriptionMax}
-                  aria-invalid={!!errors.description || undefined}
-                  aria-describedby={describedBy(ids.description, { error: errors.description })}
-                  className="min-h-16 resize-none"
-                  {...register('description')}
-                />
-              </FormField>
-
-              <div className="grid gap-5 sm:grid-cols-2">
-                <FormField id={ids.language} label="Language">
-                  <Controller
-                    control={control}
-                    name="language"
-                    render={({ field }) => (
-                      <LanguageSelect
-                        id={ids.language}
-                        ref={field.ref}
-                        value={field.value}
-                        onChange={field.onChange}
-                      />
-                    )}
+            {/* Body: one scrolling column on small screens, two columns from `lg`. */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain lg:flex-row lg:overflow-hidden">
+              {/* Main column */}
+              <div className="flex min-w-0 flex-col gap-5 px-4 py-5 sm:px-6 lg:flex-1 lg:overflow-y-auto">
+                <FormField id={IDS.title} label="Title" error={errors.title?.message}>
+                  <Input
+                    id={IDS.title}
+                    placeholder="e.g. Undo last commit"
+                    autoComplete="off"
+                    maxLength={LIMITS.titleMax}
+                    autoFocus={!isEdit}
+                    aria-invalid={!!errors.title || undefined}
+                    aria-describedby={describedBy(IDS.title, { error: errors.title })}
+                    className="h-10 text-[15px] font-medium"
+                    {...register('title')}
                   />
                 </FormField>
-                <FormField id={ids.collection} label="Collection" error={errors.collectionId?.message}>
-                  <Controller
-                    control={control}
-                    name="collectionId"
-                    render={({ field }) => (
-                      <CollectionSelect
-                        id={ids.collection}
-                        ref={field.ref}
-                        value={field.value}
-                        onChange={field.onChange}
-                        collections={collections}
-                        invalid={!!errors.collectionId}
-                      />
-                    )}
+
+                <FormField
+                  id={IDS.description}
+                  label="Description"
+                  optional
+                  error={errors.description?.message}
+                >
+                  <Textarea
+                    id={IDS.description}
+                    rows={2}
+                    placeholder="What is it for? When do you use it?"
+                    maxLength={LIMITS.descriptionMax}
+                    aria-invalid={!!errors.description || undefined}
+                    aria-describedby={describedBy(IDS.description, { error: errors.description })}
+                    className="min-h-16 resize-none"
+                    {...register('description')}
                   />
                 </FormField>
+
+                <Controller
+                  control={control}
+                  name="content"
+                  render={({ field, fieldState }) => (
+                    <FormField
+                      id={IDS.content}
+                      label="Content"
+                      error={fieldState.error?.message}
+                      onLabelClick={() => editorRef.current?.focus()}
+                      className="lg:min-h-0 lg:flex-1 lg:grid-rows-[auto_minmax(0,1fr)]"
+                      labelAside={
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {field.value.length.toLocaleString()} chars
+                        </span>
+                      }
+                    >
+                      <div
+                        className={cn(
+                          // The editor reads its height from --editor-height (placeholder too → no jump).
+                          'overflow-hidden rounded-xl border border-input bg-code shadow-xs transition-[border-color,box-shadow] duration-150',
+                          '[--editor-height:260px] sm:[--editor-height:300px] lg:min-h-60 lg:[--editor-height:100%]',
+                          'focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50',
+                          fieldState.error && 'border-destructive ring-3 ring-destructive/20',
+                        )}
+                      >
+                        <LazyCodeEditor
+                          ref={(handle) => {
+                            editorRef.current = handle
+                            field.ref(handle)
+                          }}
+                          value={field.value}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          language={language}
+                          placeholder="Paste or type your snippet…"
+                          ariaLabel="Snippet content"
+                          ariaDescribedBy={describedBy(IDS.content, { error: fieldState.error })}
+                          invalid={!!fieldState.error}
+                        />
+                      </div>
+                    </FormField>
+                  )}
+                />
               </div>
 
-              <Controller
-                control={control}
-                name="content"
-                render={({ field, fieldState }) => (
-                  <FormField
-                    id={ids.content}
-                    label="Content"
-                    error={fieldState.error?.message}
-                    onLabelClick={() => editorRef.current?.focus()}
-                    labelAside={
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {field.value.length.toLocaleString()} chars
-                      </span>
-                    }
-                  >
-                    <div
-                      className={cn(
-                        'overflow-hidden rounded-lg border border-input bg-code transition-colors',
-                        'focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50',
-                        fieldState.error && 'border-destructive ring-3 ring-destructive/20',
+              {/* Details column */}
+              <aside
+                aria-label="Snippet details"
+                className="flex flex-col gap-5 border-t bg-muted/30 px-4 py-5 sm:px-6 lg:w-80 lg:shrink-0 lg:overflow-y-auto lg:border-t-0 lg:border-l xl:w-88"
+              >
+                <h3 className="hidden text-xs font-semibold tracking-wider text-muted-foreground uppercase lg:block">
+                  Details
+                </h3>
+
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+                  <FormField id={IDS.language} label="Language">
+                    <Controller
+                      control={control}
+                      name="language"
+                      render={({ field }) => (
+                        <LanguageSelect
+                          id={IDS.language}
+                          ref={field.ref}
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
                       )}
+                    />
+                  </FormField>
+                  <FormField id={IDS.collection} label="Collection" error={errors.collectionId?.message}>
+                    <Controller
+                      control={control}
+                      name="collectionId"
+                      render={({ field }) => (
+                        <CollectionSelect
+                          id={IDS.collection}
+                          ref={field.ref}
+                          value={field.value}
+                          onChange={field.onChange}
+                          collections={collections}
+                          invalid={!!errors.collectionId}
+                        />
+                      )}
+                    />
+                  </FormField>
+                </div>
+
+                <Controller
+                  control={control}
+                  name="tags"
+                  render={({ field, fieldState }) => (
+                    <FormField
+                      id={IDS.tags}
+                      label="Tags"
+                      optional
+                      error={fieldState.error?.message}
+                      hint="Press Enter or comma to add."
+                      labelAside={
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {field.value.length}/{LIMITS.tagsPerSnippetMax}
+                        </span>
+                      }
                     >
-                      <LazyCodeEditor
-                        ref={(handle) => {
-                          editorRef.current = handle
-                          field.ref(handle)
-                        }}
+                      <TagInput
+                        id={IDS.tags}
+                        ref={field.ref}
                         value={field.value}
                         onChange={field.onChange}
                         onBlur={field.onBlur}
-                        language={language}
-                        placeholder="Paste or type your snippet…"
-                        ariaLabel="Snippet content"
-                        ariaDescribedBy={describedBy(ids.content, { error: fieldState.error })}
+                        suggestions={tagSuggestions}
                         invalid={!!fieldState.error}
+                        aria-describedby={
+                          fieldState.error ? fieldIds(IDS.tags).error : fieldIds(IDS.tags).hint
+                        }
                       />
-                    </div>
-                  </FormField>
-                )}
-              />
+                    </FormField>
+                  )}
+                />
 
-              <Controller
-                control={control}
-                name="tags"
-                render={({ field, fieldState }) => (
-                  <FormField
-                    id={ids.tags}
-                    label="Tags"
-                    optional
-                    error={fieldState.error?.message}
-                    hint="Press Enter or comma to add. Tags are saved in lowercase."
-                    labelAside={
-                      <span className="text-xs text-muted-foreground tabular-nums">
-                        {field.value.length}/{LIMITS.tagsPerSnippetMax}
-                      </span>
-                    }
-                  >
-                    <TagInput
-                      id={ids.tags}
-                      ref={field.ref}
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      suggestions={tagSuggestions}
-                      invalid={!!fieldState.error}
-                      aria-describedby={fieldState.error ? fieldIds(ids.tags).error : fieldIds(ids.tags).hint}
-                    />
-                  </FormField>
-                )}
-              />
+                <Controller
+                  control={control}
+                  name="isFavorite"
+                  render={({ field }) => <FavoriteToggle checked={field.value} onChange={field.onChange} />}
+                />
+              </aside>
             </div>
 
             {/* Footer */}
@@ -331,17 +391,13 @@ export function SnippetEditorDialog({ request, open, onClose, defaultLanguage }:
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 flex-1 sm:h-9 sm:flex-none"
+                className="flex-1 sm:flex-none"
                 onClick={requestClose}
                 disabled={isSubmitting}
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                className="h-10 flex-1 sm:h-9 sm:flex-none sm:px-4"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" className="flex-1 sm:flex-none sm:px-5" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="animate-spin" aria-hidden="true" />}
                 {isEdit ? 'Save changes' : 'Create snippet'}
               </Button>

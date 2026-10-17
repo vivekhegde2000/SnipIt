@@ -1,7 +1,9 @@
 import { useId, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type Ref } from 'react'
+import { AnimatePresence, m } from 'motion/react'
 import { Hash, X } from 'lucide-react'
 import { LIMITS, normalizeTag, normalizeTags } from '@snipit/shared'
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
+import { TRANSITION } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 const MAX_SUGGESTIONS = 8
@@ -164,34 +166,41 @@ export function TagInput({
           onClick={() => inputRef.current?.focus()}
           aria-disabled={disabled}
           className={cn(
-            'flex min-h-10 w-full cursor-text flex-wrap items-center gap-1.5 rounded-lg border border-input bg-transparent px-2 py-1.5 text-sm transition-colors sm:min-h-9 dark:bg-input/30',
+            'flex min-h-9 w-full cursor-text flex-wrap items-center gap-1.5 rounded-lg border border-input bg-transparent px-2 py-1.5 text-sm shadow-xs transition-[border-color,box-shadow] dark:bg-input/30 pointer-coarse:min-h-10',
             'focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50',
             invalid &&
               'border-destructive ring-3 ring-destructive/20 dark:border-destructive/50 dark:ring-destructive/40',
             disabled && 'pointer-events-none opacity-50',
           )}
         >
-          {value.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex h-6 items-center gap-1 rounded-full bg-accent pr-1 pl-2 text-xs font-medium text-accent-foreground"
-            >
-              <Hash className="size-3 opacity-60" aria-hidden="true" />
-              {tag}
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  removeTag(tag)
-                }}
-                disabled={disabled}
-                aria-label={`Remove tag ${tag}`}
-                className="grid size-4 place-items-center rounded-full opacity-60 transition hover:bg-foreground/10 hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          <AnimatePresence initial={false}>
+            {value.map((tag) => (
+              <m.span
+                key={tag}
+                layout="position"
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.7, transition: TRANSITION.fast }}
+                transition={TRANSITION.pop}
+                className="inline-flex h-6 items-center gap-1 rounded-full bg-accent pr-1 pl-2 text-xs font-medium text-accent-foreground"
               >
-                <X className="size-3" aria-hidden="true" />
-              </button>
-            </span>
-          ))}
+                <Hash className="size-3 opacity-60" aria-hidden="true" />
+                {tag}
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    removeTag(tag)
+                  }}
+                  disabled={disabled}
+                  aria-label={`Remove tag ${tag}`}
+                  className="grid size-4 place-items-center rounded-full opacity-60 transition hover:bg-foreground/10 hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <X className="size-3" aria-hidden="true" />
+                </button>
+              </m.span>
+            ))}
+          </AnimatePresence>
           <input
             id={id}
             ref={setRefs}

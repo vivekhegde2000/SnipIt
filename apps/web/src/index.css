@@ -5,6 +5,24 @@
 @custom-variant dark (&:is(.dark *));
 
 /* -------------------------------------------------------------------------------------------------
+ * Motion tokens (CSS side). JS animations use the same values from src/lib/motion.ts.
+ * -----------------------------------------------------------------------------------------------*/
+@theme {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --animate-shimmer: shimmer 1.8s ease-in-out infinite;
+
+  @keyframes shimmer {
+    from {
+      background-position: 150% 0;
+    }
+    to {
+      background-position: -50% 0;
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------------------------------
  * Design tokens → Tailwind utilities
  * -----------------------------------------------------------------------------------------------*/
 @theme inline {
@@ -176,12 +194,14 @@
     @apply bg-primary/20;
   }
 
+  /* Show code exactly as it will be copied: no ligatures (JetBrains Mono draws `=>` as ⇒ and
+     `<=` as ≤ via contextual alternates, which `'liga' 0` alone does not disable). */
   code,
   kbd,
   pre,
   samp {
     @apply font-mono;
-    font-feature-settings: 'liga' 0;
+    font-variant-ligatures: none;
   }
 
   /* Thin, theme-aware scrollbars. */

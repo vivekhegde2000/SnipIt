@@ -1,9 +1,19 @@
 /**
- * Code-split entry points for the snippet editor. The same loader functions are used by
- * `React.lazy` and by the idle-time preload, so the browser fetches each chunk only once.
+ * Code-split entry point for CodeMirror (~140 KB gzipped). `React.lazy` and the preloads share this
+ * loader, so the module is fetched at most once.
  */
-export const loadSnippetEditorDialog = () => import('./SnippetEditorDialog')
 export const loadCodeEditor = () => import('./CodeEditor')
+
+let preloaded = false
+
+/** Starts fetching the editor (idempotent). Call on intent: hover/focus of a "New" or edit trigger. */
+export function preloadCodeEditor(): void {
+  if (preloaded) return
+  preloaded = true
+  loadCodeEditor().catch(() => {
+    preloaded = false // allow a retry later (e.g. offline during first visit)
+  })
+}
 
 type IdleWindow = Window & {
   requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
@@ -11,20 +21,15 @@ type IdleWindow = Window & {
 }
 
 /**
- * Warms the editor chunks once the browser is idle, so the first "New snippet" opens instantly
- * without putting them on the critical path. Returns a cancel function.
+ * Warms the editor right after the app has painted, so the first "New snippet" opens instantly
+ * without putting CodeMirror on the critical path. Returns a cancel function.
  */
-export function preloadEditorWhenIdle(): () => void {
+export function preloadCodeEditorAfterPaint(): () => void {
   const win = window as IdleWindow
-  const preload = () => {
-    void loadSnippetEditorDialog().catch(() => undefined)
-    void loadCodeEditor().catch(() => undefined)
-  }
-
   if (win.requestIdleCallback && win.cancelIdleCallback) {
-    const handle = win.requestIdleCallback(preload, { timeout: 4000 })
+    const handle = win.requestIdleCallback(preloadCodeEditor, { timeout: 1200 })
     return () => win.cancelIdleCallback?.(handle)
   }
-  const timer = window.setTimeout(preload, 1500)
+  const timer = window.setTimeout(preloadCodeEditor, 300)
   return () => window.clearTimeout(timer)
 }

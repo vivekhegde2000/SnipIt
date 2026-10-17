@@ -1,17 +1,13 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { SnippetFormValues } from '@snipit/shared'
 import { useSettings } from '@/features/settings/use-settings'
-import { loadSnippetEditorDialog, preloadEditorWhenIdle } from './editor-loader'
+import { preloadCodeEditor, preloadCodeEditorAfterPaint } from './editor-loader'
+import { SnippetEditorDialog } from './SnippetEditorDialog'
 import {
   SnippetEditorContext,
   type SnippetEditorApi,
   type SnippetEditorRequest,
 } from './snippet-editor-context'
-
-// The form stack (react-hook-form, resolvers, editor UI) stays out of the initial bundle.
-const SnippetEditorDialog = lazy(() =>
-  loadSnippetEditorDialog().then((module) => ({ default: module.SnippetEditorDialog })),
-)
 
 type EditorSession = {
   /** Increments per open, so every session mounts a fresh form. */
@@ -21,15 +17,19 @@ type EditorSession = {
 }
 
 /**
- * Owns the single snippet editor dialog. The session stays mounted after closing so Radix can
- * play the exit animation; the next open replaces it with a new key.
+ * Owns the single snippet editor dialog.
+ *
+ * Performance: the dialog and form ship in the main bundle so opening is instant; only CodeMirror
+ * is code-split, and it is preloaded right after first paint (and again on hover/focus intent).
+ * The session stays mounted after closing so the exit animation can play; the next open replaces
+ * it with a new key.
  */
 export function SnippetEditorProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<EditorSession | null>(null)
   // Read here (always mounted, so already resolved) rather than inside the freshly mounted dialog.
   const { defaultLanguage } = useSettings()
 
-  useEffect(() => preloadEditorWhenIdle(), [])
+  useEffect(() => preloadCodeEditorAfterPaint(), [])
 
   const open = useCallback((request: SnippetEditorRequest) => {
     setSession((current) => ({ id: (current?.id ?? 0) + 1, request, open: true }))
@@ -43,6 +43,7 @@ export function SnippetEditorProvider({ children }: { children: ReactNode }) {
     () => ({
       openCreate: (defaults?: Partial<SnippetFormValues>) => open({ mode: 'create', defaults }),
       openEdit: (snippetId: string) => open({ mode: 'edit', snippetId }),
+      preload: preloadCodeEditor,
     }),
     [open],
   )
@@ -51,15 +52,13 @@ export function SnippetEditorProvider({ children }: { children: ReactNode }) {
     <SnippetEditorContext value={api}>
       {children}
       {session && (
-        <Suspense fallback={null}>
-          <SnippetEditorDialog
-            key={session.id}
-            request={session.request}
-            open={session.open}
-            onClose={close}
-            defaultLanguage={defaultLanguage}
-          />
-        </Suspense>
+        <SnippetEditorDialog
+          key={session.id}
+          request={session.request}
+          open={session.open}
+          onClose={close}
+          defaultLanguage={defaultLanguage}
+        />
       )}
     </SnippetEditorContext>
   )

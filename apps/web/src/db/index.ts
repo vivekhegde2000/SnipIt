@@ -1,6 +1,6 @@
 export { db } from './db'
 export { RepositoryError, getErrorMessage } from './errors'
+export { deleteAllData } from './maintenance'
 export { collectionRepository } from './repositories/collection-repository'
 export { settingsRepository } from './repositories/settings-repository'
 export { snippetRepository } from './repositories/snippet-repository'
-export { seedSampleData } from './seed'

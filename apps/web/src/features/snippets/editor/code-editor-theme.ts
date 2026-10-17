@@ -12,7 +12,8 @@ export const editorTheme = EditorView.theme({
     fontSize: '13px',
   },
   '&.cm-focused': { outline: 'none' },
-  '.cm-scroller': { fontFamily: MONO_FONT, lineHeight: '1.65' },
+  // No ligatures: what you see must be exactly what gets copied (`=>` must not render as ⇒).
+  '.cm-scroller': { fontFamily: MONO_FONT, lineHeight: '1.65', fontVariantLigatures: 'none' },
   '.cm-content': { padding: '10px 0', caretColor: 'var(--primary)' },
   '.cm-line': { padding: '0 12px 0 6px' },
   '.cm-cursor, .cm-dropCursor': { borderLeftColor: 'var(--primary)', borderLeftWidth: '2px' },
@@ -71,6 +72,11 @@ export const editorHighlighting = syntaxHighlighting(
       color: 'var(--syntax-function)',
     },
     { tag: [t.typeName, t.className, t.namespace, t.self], color: 'var(--syntax-type)' },
+    // Token types produced by legacy (stream) grammars: shell/PowerShell builtins, $variables, defs.
+    { tag: t.standard(t.variableName), color: 'var(--syntax-function)' },
+    { tag: [t.special(t.variableName), t.local(t.variableName)], color: 'var(--syntax-property)' },
+    { tag: t.definition(t.variableName), color: 'var(--syntax-type)' },
+    { tag: [t.operator, t.punctuation], color: 'color-mix(in oklch, var(--foreground) 70%, transparent)' },
     { tag: [t.propertyName, t.definition(t.propertyName), t.labelName], color: 'var(--syntax-property)' },
     { tag: [t.tagName, t.angleBracket], color: 'var(--syntax-tag)' },
     { tag: t.attributeName, color: 'var(--syntax-attribute)' },

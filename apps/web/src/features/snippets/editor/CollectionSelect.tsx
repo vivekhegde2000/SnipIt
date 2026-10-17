@@ -26,7 +26,7 @@ type CollectionSelectProps = {
 export function CollectionSelect({ id, value, onChange, collections, invalid, ref }: CollectionSelectProps) {
   return (
     <Select value={value ?? NONE} onValueChange={(next) => onChange(next === NONE ? null : next)}>
-      <SelectTrigger id={id} ref={ref} aria-invalid={invalid || undefined} className="h-10 w-full sm:h-9">
+      <SelectTrigger id={id} ref={ref} aria-invalid={invalid || undefined} className="w-full">
         <SelectValue />
       </SelectTrigger>
       <SelectContent position="popper" className="max-h-72">

@@ -59,7 +59,8 @@ Only free, open-source libraries are used (MIT / Apache-2.0 / ISC / OFL licences
 | Search | Fuse.js (fuzzy, typo-tolerant) |
 | Command palette | cmdk (via the shadcn `Command` component) |
 | Keyboard shortcuts | react-hotkeys-hook |
-| Code editor | CodeMirror 6 (`@uiw/react-codemirror`), lazy-loaded |
+| Code editor | CodeMirror 6 (`@uiw/react-codemirror`), lazy-loaded; grammars loaded per language (`@codemirror/lang-*`, `legacy-modes`) |
+| Animation | Motion (`motion/react`, MIT) with `LazyMotion` — features loaded lazily, honours reduced motion |
 | Code preview highlighting | prism-react-renderer |
 | Forms / validation | react-hook-form + zod |
 | Toasts | sonner |

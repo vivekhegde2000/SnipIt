@@ -3,6 +3,7 @@ import { Star } from 'lucide-react'
 import { getLanguageLabel, type Collection, type Snippet } from '@snipit/shared'
 import { ColorDot } from '@/components/ColorDot'
 import { formatDateTime, formatRelativeTime } from '@/lib/dates'
+import { LIFT_ON_HOVER } from '@/lib/layout'
 import { cn } from '@/lib/utils'
 
 const PREVIEW_MAX_CHARS = 600
@@ -13,6 +14,8 @@ type SnippetCardProps = {
   snippet: Snippet
   collection?: Collection
   onOpen: (snippetId: string) => void
+  /** Hover/focus intent — used to warm the editor before the click lands. */
+  onIntent?: () => void
 }
 
 function buildPreview(content: string): { text: string; isTruncated: boolean } {
@@ -22,15 +25,21 @@ function buildPreview(content: string): { text: string; isTruncated: boolean } {
 }
 
 /** Library card. The whole card is clickable via a stretched title button (one tab stop). */
-export const SnippetCard = memo(function SnippetCard({ snippet, collection, onOpen }: SnippetCardProps) {
+export const SnippetCard = memo(function SnippetCard({
+  snippet,
+  collection,
+  onOpen,
+  onIntent,
+}: SnippetCardProps) {
   const preview = buildPreview(snippet.content)
   const hiddenTagCount = Math.max(0, snippet.tags.length - VISIBLE_TAGS)
 
   return (
     <article
+      onPointerEnter={onIntent}
       className={cn(
-        'group relative flex flex-col rounded-xl border bg-card p-4 text-card-foreground shadow-xs transition-all duration-200',
-        'hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-md',
+        'group relative flex flex-col rounded-2xl border bg-card p-4 text-card-foreground shadow-xs',
+        LIFT_ON_HOVER,
         'has-focus-visible:ring-3 has-focus-visible:ring-ring/50',
       )}
     >
@@ -39,7 +48,8 @@ export const SnippetCard = memo(function SnippetCard({ snippet, collection, onOp
           <button
             type="button"
             onClick={() => onOpen(snippet.id)}
-            className="line-clamp-2 text-left outline-none after:absolute after:inset-0 after:rounded-xl"
+            onFocus={onIntent}
+            className="line-clamp-2 text-left outline-none after:absolute after:inset-0 after:rounded-2xl"
           >
             {snippet.title}
           </button>

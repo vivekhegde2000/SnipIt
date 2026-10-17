@@ -13,7 +13,7 @@ type LanguageSelectProps = {
 export function LanguageSelect({ id, value, onChange, invalid, ref }: LanguageSelectProps) {
   return (
     <Select value={value} onValueChange={(next) => onChange(next as LanguageId)}>
-      <SelectTrigger id={id} ref={ref} aria-invalid={invalid || undefined} className="h-10 w-full sm:h-9">
+      <SelectTrigger id={id} ref={ref} aria-invalid={invalid || undefined} className="w-full">
         <SelectValue />
       </SelectTrigger>
       <SelectContent position="popper" className="max-h-72">

@@ -16,7 +16,7 @@ export function MobileHeader() {
       <div className="flex h-14 items-center gap-1 px-2">
         <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-10" aria-label="Open menu">
+            <Button variant="ghost" size="icon" aria-label="Open menu">
               <Menu className="size-5" aria-hidden="true" />
             </Button>
           </SheetTrigger>
