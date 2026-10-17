@@ -1,35 +1,36 @@
 /**
  * Languages a snippet can be tagged with. `id` is the persisted value and must never change;
- * `label` is for display. Order is the order shown in pickers (common first).
+ * `label` is for display; `extension` is used when downloading a snippet as a file.
+ * Order is the order shown in pickers (common first).
  */
 export const LANGUAGES = [
-  { id: 'plaintext', label: 'Plain text' },
-  { id: 'markdown', label: 'Markdown' },
-  { id: 'bash', label: 'Bash / Shell' },
-  { id: 'powershell', label: 'PowerShell' },
-  { id: 'sql', label: 'SQL' },
-  { id: 'javascript', label: 'JavaScript' },
-  { id: 'typescript', label: 'TypeScript' },
-  { id: 'jsx', label: 'JSX' },
-  { id: 'tsx', label: 'TSX' },
-  { id: 'json', label: 'JSON' },
-  { id: 'yaml', label: 'YAML' },
-  { id: 'html', label: 'HTML' },
-  { id: 'css', label: 'CSS' },
-  { id: 'python', label: 'Python' },
-  { id: 'java', label: 'Java' },
-  { id: 'csharp', label: 'C#' },
-  { id: 'cpp', label: 'C++' },
-  { id: 'c', label: 'C' },
-  { id: 'go', label: 'Go' },
-  { id: 'rust', label: 'Rust' },
-  { id: 'php', label: 'PHP' },
-  { id: 'ruby', label: 'Ruby' },
-  { id: 'kotlin', label: 'Kotlin' },
-  { id: 'swift', label: 'Swift' },
-  { id: 'dockerfile', label: 'Dockerfile' },
-  { id: 'xml', label: 'XML' },
-  { id: 'toml', label: 'TOML' },
+  { id: 'plaintext', label: 'Plain text', extension: 'txt' },
+  { id: 'markdown', label: 'Markdown', extension: 'md' },
+  { id: 'bash', label: 'Bash / Shell', extension: 'sh' },
+  { id: 'powershell', label: 'PowerShell', extension: 'ps1' },
+  { id: 'sql', label: 'SQL', extension: 'sql' },
+  { id: 'javascript', label: 'JavaScript', extension: 'js' },
+  { id: 'typescript', label: 'TypeScript', extension: 'ts' },
+  { id: 'jsx', label: 'JSX', extension: 'jsx' },
+  { id: 'tsx', label: 'TSX', extension: 'tsx' },
+  { id: 'json', label: 'JSON', extension: 'json' },
+  { id: 'yaml', label: 'YAML', extension: 'yaml' },
+  { id: 'html', label: 'HTML', extension: 'html' },
+  { id: 'css', label: 'CSS', extension: 'css' },
+  { id: 'python', label: 'Python', extension: 'py' },
+  { id: 'java', label: 'Java', extension: 'java' },
+  { id: 'csharp', label: 'C#', extension: 'cs' },
+  { id: 'cpp', label: 'C++', extension: 'cpp' },
+  { id: 'c', label: 'C', extension: 'c' },
+  { id: 'go', label: 'Go', extension: 'go' },
+  { id: 'rust', label: 'Rust', extension: 'rs' },
+  { id: 'php', label: 'PHP', extension: 'php' },
+  { id: 'ruby', label: 'Ruby', extension: 'rb' },
+  { id: 'kotlin', label: 'Kotlin', extension: 'kt' },
+  { id: 'swift', label: 'Swift', extension: 'swift' },
+  { id: 'dockerfile', label: 'Dockerfile', extension: 'dockerfile' },
+  { id: 'xml', label: 'XML', extension: 'xml' },
+  { id: 'toml', label: 'TOML', extension: 'toml' },
 ] as const
 
 export type LanguageId = (typeof LANGUAGES)[number]['id']
@@ -38,12 +39,17 @@ export const LANGUAGE_IDS = LANGUAGES.map((language) => language.id) as [Languag
 
 export const DEFAULT_LANGUAGE: LanguageId = 'plaintext'
 
-const LABELS = new Map<string, string>(LANGUAGES.map((l) => [l.id, l.label]))
+const BY_ID = new Map<string, (typeof LANGUAGES)[number]>(LANGUAGES.map((l) => [l.id, l]))
 
 export function getLanguageLabel(id: string): string {
-  return LABELS.get(id) ?? id
+  return BY_ID.get(id)?.label ?? id
+}
+
+/** File extension (without dot) for downloads; `txt` for unknown ids. */
+export function getLanguageExtension(id: string): string {
+  return BY_ID.get(id)?.extension ?? 'txt'
 }
 
 export function isLanguageId(value: string): value is LanguageId {
-  return LABELS.has(value)
+  return BY_ID.has(value)
 }

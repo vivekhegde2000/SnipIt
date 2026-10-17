@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { Menu } from 'lucide-react'
+import { Menu, Search } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { useAppCommands } from '@/features/commands/commands-context'
 import { Sidebar } from './Sidebar'
 import { ThemeToggle } from './ThemeToggle'
 
-/** Top bar for phones: drawer menu, logo, theme. */
+/** Top bar for phones: drawer menu, logo, search (command palette), theme. */
 export function MobileHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { openPalette } = useAppCommands()
 
   return (
     <header className="sticky top-0 z-30 border-b bg-background/80 pt-[env(safe-area-inset-top)] backdrop-blur-lg supports-backdrop-filter:bg-background/70">
@@ -37,7 +39,16 @@ export function MobileHeader() {
           <Logo />
         </Link>
 
-        <ThemeToggle className="ml-auto" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="ml-auto"
+          aria-label="Search and commands"
+          onClick={openPalette}
+        >
+          <Search className="size-5" aria-hidden="true" />
+        </Button>
+        <ThemeToggle />
       </div>
     </header>
   )

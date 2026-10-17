@@ -211,6 +211,65 @@
   }
 }
 
+/* -------------------------------------------------------------------------------------------------
+ * Syntax highlighting classes (shared by the editor and read-only previews).
+ * Mapping from grammar tags lives in src/features/snippets/code/syntax-highlighter.ts.
+ * -----------------------------------------------------------------------------------------------*/
+.sx-keyword {
+  color: var(--syntax-keyword);
+}
+.sx-string {
+  color: var(--syntax-string);
+}
+.sx-comment {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+.sx-number {
+  color: var(--syntax-number);
+}
+.sx-function {
+  color: var(--syntax-function);
+}
+.sx-type {
+  color: var(--syntax-type);
+}
+.sx-property {
+  color: var(--syntax-property);
+}
+.sx-tag {
+  color: var(--syntax-tag);
+}
+.sx-attribute {
+  color: var(--syntax-attribute);
+}
+.sx-meta {
+  color: var(--syntax-comment);
+}
+.sx-punctuation {
+  color: color-mix(in oklch, var(--foreground) 70%, transparent);
+}
+.sx-heading {
+  color: var(--syntax-number);
+  font-weight: 700;
+}
+.sx-strong {
+  font-weight: 700;
+}
+.sx-emphasis {
+  font-style: italic;
+}
+.sx-strike {
+  text-decoration: line-through;
+}
+.sx-link {
+  color: var(--syntax-function);
+  text-decoration: underline;
+}
+.sx-invalid {
+  color: var(--syntax-invalid);
+}
+
 /* Disable all transitions while the theme is switching, so colours don't animate. */
 .theme-switching,
 .theme-switching * {

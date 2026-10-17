@@ -1,8 +1,9 @@
 import { Link } from 'react-router'
 import { m } from 'motion/react'
-import { FolderOpen } from 'lucide-react'
+import { FolderOpen, FolderPlus, Plus } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/PageHeader'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDelayedFlag } from '@/hooks/use-delayed-flag'
 import { useDocumentTitle } from '@/hooks/use-document-title'
@@ -11,9 +12,12 @@ import { LIFT_ON_HOVER, TILE_GRID } from '@/lib/layout'
 import { STAGGER_LIMIT, STAGGER_STEP, TRANSITION } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 import { COLLECTION_COLOR_CLASSES } from '../collection-colors'
+import { CollectionActionsMenu } from '../components/CollectionActionsMenu'
+import { useCollectionEditor } from '../editor/collection-editor-context'
 
 export function CollectionsPage() {
   const { collections, counts, isLoading } = useLibrary()
+  const { create } = useCollectionEditor()
   const showSkeleton = useDelayedFlag(isLoading)
   useDocumentTitle('Collections')
 
@@ -32,6 +36,12 @@ export function CollectionsPage() {
       <PageHeader
         title="Collections"
         description={`${collections.length} collection${collections.length === 1 ? '' : 's'}`}
+        actions={
+          <Button onClick={() => create()}>
+            <Plus aria-hidden="true" />
+            New collection
+          </Button>
+        }
       />
 
       {collections.length === 0 ? (
@@ -39,7 +49,12 @@ export function CollectionsPage() {
           icon={FolderOpen}
           title="No collections yet"
           description="Collections group related snippets — for example Git, SQL or Email templates."
-        />
+        >
+          <Button onClick={() => create()}>
+            <FolderPlus aria-hidden="true" />
+            Create a collection
+          </Button>
+        </EmptyState>
       ) : (
         <ul className={TILE_GRID}>
           {collections.map((collection, index) => {
@@ -48,15 +63,20 @@ export function CollectionsPage() {
             return (
               <m.li
                 key={collection.id}
+                layout="position"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ ...TRANSITION.base, delay: Math.min(index, STAGGER_LIMIT) * STAGGER_STEP }}
-                className="grid"
+                transition={{
+                  ...TRANSITION.base,
+                  delay: Math.min(index, STAGGER_LIMIT) * STAGGER_STEP,
+                  layout: TRANSITION.layout,
+                }}
+                className="group/tile relative grid"
               >
                 <Link
                   to={`/collections/${collection.id}`}
                   className={cn(
-                    'relative flex items-center gap-4 rounded-2xl border bg-card p-4 shadow-xs focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
+                    'relative flex items-center gap-4 rounded-2xl border bg-card p-4 pr-12 shadow-xs focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none',
                     LIFT_ON_HOVER,
                   )}
                 >
@@ -73,6 +93,10 @@ export function CollectionsPage() {
                     </span>
                   </span>
                 </Link>
+                <CollectionActionsMenu
+                  collection={collection}
+                  triggerClassName="absolute top-3 right-3 opacity-0 transition-opacity group-focus-within/tile:opacity-100 group-hover/tile:opacity-100 data-[state=open]:opacity-100 pointer-coarse:opacity-100"
+                />
               </m.li>
             )
           })}

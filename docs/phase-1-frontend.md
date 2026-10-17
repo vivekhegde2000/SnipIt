@@ -257,27 +257,31 @@ after any write. Phase 2 keeps these hooks and adds a sync layer underneath.
 
 ## 6. Keyboard shortcuts
 
-Single-key shortcuts are **disabled while typing** in inputs (react-hotkeys-hook default).
-`Mod` = `Ctrl` on Windows/Linux and `⌘` on macOS.
+Single-key shortcuts are **disabled while typing** (inputs, the code editor) and while a dialog or
+menu is open. `Mod` = `Ctrl` on Windows/Linux and `⌘` on macOS.
 
 | Keys | Action |
 |---|---|
-| `Mod+K` | Open command palette: search snippets, **Enter = copy**, `Mod+Enter` = open; also has commands like "New snippet" and "Toggle theme" |
-| `/` | Focus the search box |
+| `Mod+K` | Command palette: search snippets, **Enter = copy**, `Mod+Enter` = open details; also commands (new snippet/collection, navigation, theme, shortcuts) |
+| `/` | Focus the search box (opens the palette on pages without one) |
 | `N` | New snippet |
-| `↑ ↓` or `J K` | Move selection in the list |
-| `Enter` or `C` | Copy the selected snippet |
-| `O` | Open the selected snippet's details |
-| `E` | Edit the selected snippet |
-| `F` | Toggle favorite on the selected snippet |
-| `Delete` | Delete the selected snippet (with Undo) |
+| `J` / `K` | Next / previous snippet card |
+| `← ↑ → ↓` | Move between cards (↑/↓ move by a whole row of the grid) |
+| `Enter` or `O` | Open the focused snippet's details |
+| `C` | Copy the focused snippet |
+| `E` / `F` / `D` | Edit / favorite / duplicate the focused snippet |
+| `Delete` | Delete the focused snippet (with Undo) |
 | `Mod+S` / `Mod+Enter` | Save in the editor |
 | `Esc` | Close dialog / panel / palette; clear search |
-| `G` then `A` / `F` / `S` | Go to All / Favorites / Settings |
+| `G` then `A` / `F` / `R` / `C` / `S` | Go to All / Favorites / Recent / Collections / Settings |
 | `?` | Shortcut cheat sheet |
 
-Shortcuts are defined in **one registry file** (`lib/shortcuts.ts`) that is used both to bind them and to
-render the cheat sheet, so the two never drift apart.
+> Change from the original plan: **Enter opens** and **C copies** (the plan had Enter = copy). Enter
+> activating the focused button is what keyboard and screen-reader users expect; in the command
+> palette Enter still copies.
+
+The reference lives in **one registry** (`features/commands/shortcuts.ts`) that renders the cheat sheet;
+global keys are handled in `use-global-shortcuts.ts`, focused-snippet keys in `snippet-shortcuts.ts`.
 
 ---
 
@@ -315,43 +319,48 @@ Wrapped in a reusable `<CopyButton>` and a `useCopySnippet()` hook (copy, toast,
 
 ## 9. Folder structure (`apps/web/src`)
 
-Items marked *(Day 2/3)* are planned and don't exist yet.
+Items marked *(Day 3)* are planned and don't exist yet.
 
 ```
 src/
 ├─ app/
-│  ├─ App.tsx                 # providers (theme, tooltips, toasts) + router
+│  ├─ App.tsx                 # providers (theme, motion, tooltips, toasts) + router
 │  ├─ router.tsx              # route table
 │  ├─ layout/                 # AppLayout, Sidebar (full + rail), MobileHeader, BottomNav,
 │  │                          #   NewSnippetFab, ThemeToggle, ScrollToTop, nav-items
+│  ├─ motion/                 # MotionProvider (LazyMotion), lazily loaded feature bundle
 │  ├─ pages/                  # NotFoundPage, RouteErrorPage
 │  └─ theme/                  # ThemeProvider, theme-context, theme-storage, theme-options
 ├─ components/
 │  ├─ ui/                     # shadcn primitives (generated; edit sparingly)
+│  ├─ CopyButton.tsx  FavoriteButton.tsx  HighlightText.tsx  RadioGrid.tsx
 │  ├─ TagInput.tsx            # chip input + autocomplete combobox
-│  ├─ FormField.tsx           # label + hint + error wiring
-│  ├─ ConfirmDialog.tsx
-│  ├─ EmptyState.tsx  PageHeader.tsx  ColorDot.tsx  Kbd.tsx  Logo.tsx
-│  └─ CopyButton.tsx  CodeBlock.tsx  ResponsiveDialog.tsx        (Day 2)
+│  ├─ FormField.tsx  ConfirmDialog.tsx
+│  └─ EmptyState.tsx  PageHeader.tsx  ColorDot.tsx  Kbd.tsx  Logo.tsx
 ├─ features/
-│  ├─ library/                # LibraryProvider (live data + counts + tags), sample-data hook
+│  ├─ library/                # LibraryProvider (live data + counts + tags)
 │  ├─ snippets/
-│  │  ├─ editor/              # SnippetEditorProvider/Dialog, lazy CodeEditor, selects, loaders
-│  │  ├─ components/          # SnippetCard, SnippetGrid (+ SnippetDetail, actions menu: Day 2)
-│  │  ├─ lib/                 # select-snippets (view + filter logic)
-│  │  ├─ pages/               # SnippetsPage (all / favorites / recent / collection)
-│  │  └─ use-new-snippet.ts   # context-aware "new snippet"
-│  ├─ collections/            # CollectionsPage, colour classes (+ CollectionDialog: Day 2)
-│  ├─ settings/               # SettingsPage, use-settings
-│  ├─ search/                 # Fuse index, FilterBar, CommandPalette            (Day 2)
+│  │  ├─ actions/             # use-snippet-actions (copy, favorite, move, delete+undo…),
+│  │  │                       #   SnippetActionsMenu, snippet-shortcuts
+│  │  ├─ code/                # language loaders, shared syntax highlighter, CodeBlock
+│  │  ├─ detail/              # SnippetDetailHost/Sheet, URL-driven detail state
+│  │  ├─ editor/              # SnippetEditorProvider/Dialog, lazy CodeEditor, selects
+│  │  ├─ components/          # SnippetCard, SnippetGrid, SnippetToolbar, TagFilter, LibraryWelcome
+│  │  ├─ hooks/               # use-snippet-query (URL state), use-search-text
+│  │  ├─ lib/                 # select-snippets (view/filter/sort), snippet-search (Fuse)
+│  │  └─ pages/               # SnippetsPage (all / favorites / recent / collection)
+│  ├─ collections/            # CollectionsPage, editor (dialog, provider), actions menu
+│  ├─ commands/               # CommandPalette, ShortcutsDialog, global shortcuts, registry
+│  ├─ settings/               # SettingsPage, DeleteAllDataDialog, use-settings
 │  └─ backup/                 # export / import                                   (Day 3)
 ├─ db/
 │  ├─ db.ts                   # Dexie instance + schema versions
 │  ├─ errors.ts               # RepositoryError, parseOrThrow, getErrorMessage
-│  ├─ seed.ts                 # sample library
+│  ├─ maintenance.ts          # deleteAllData
 │  └─ repositories/           # snippet-, collection-, settings-repository
-├─ hooks/                     # use-media-query (breakpoints), use-document-title
-├─ lib/                       # storage (safe localStorage), platform (⌘/Ctrl), dates, field-ids, utils
+├─ hooks/                     # use-media-query, use-document-title, use-delayed-flag
+├─ lib/                       # clipboard, download, keyboard, motion, layout, storage, platform,
+│                             #   dates, field-ids, utils
 ├─ index.css                  # Tailwind + design tokens (light/dark, syntax colours)
 └─ main.tsx
 ```
@@ -447,15 +456,29 @@ Also added: **Settings → Danger zone → Delete all data** (type `DELETE` to c
 Measured click → next paint (Event Timing API, production build): open editor 40–80 ms, close 24–32 ms,
 navigation 24–32 ms. Dev mode was 520–650 ms for the first open before the fix.
 
-### Day 2 — Core features
-- [ ] `SnippetCard` + `SnippetGrid`: add syntax-highlighted preview (basic cards done on Day 1)
-- [ ] **Card quick actions** (review feedback): **Copy** button and **favorite** star directly on the card, plus `⋯` menu
-- [ ] `SnippetDetail` panel/dialog — **clicking a card opens the detail view** (decided in review); Edit from there
-- [ ] `CopyButton` + `useCopySnippet` (clipboard fallback, check-mark animation, toast, copy stats)
-- [ ] Actions menu: edit, duplicate, favorite, move to collection, export, delete with Undo (exit animation already in place)
-- [ ] Search (Fuse.js) + `FilterBar` (collection, tags, language, favorites) + sort, synced to the URL
-- [ ] **Collections CRUD with obvious entry points** (review feedback): "+" next to COLLECTIONS in the sidebar, "New collection" on the Collections page, "+ New collection…" inside the editor's Collection select; rename / recolour / delete via `⋯`
-- [ ] Command palette (`Mod+K`) + shortcut registry + list keyboard navigation + `?` cheat sheet (then restore `N` hints in the UI)
+### Day 2 — Core features ✅
+- [x] `SnippetCard` + `SnippetGrid`: syntax-highlighted, fading preview (shares the editor's grammars and colours)
+- [x] **Card quick actions** (review feedback): **Copy** button and **favorite** star on the card, plus `⋯` menu
+- [x] Snippet detail view — **clicking a card opens it** (right-side panel; full screen on phones), URL-driven (`?snippet=`) so Back closes it
+- [x] `CopyButton` + shared snippet actions (clipboard fallback incl. inside dialogs, check-mark animation, toast, copy stats)
+- [x] Actions menu: open, edit, copy, favorite, duplicate, move to collection (incl. "New collection…"), download as file, delete with Undo
+- [x] Search (Fuse.js) + filter bar (language, tags, collection, favorites) + sort, all synced to the URL; active-filter chips; match highlighting
+- [x] **Collections CRUD with obvious entry points** (review feedback): "+" in the sidebar (and "Create your first collection"), "New collection" on the Collections page, "+ New collection…" in the editor's Collection select and in Move-to-collection; edit (name, colour, emoji) / delete with Undo via `⋯`
+- [x] Command palette (`Mod+K`), keyboard shortcuts (global + focused card + grid arrow keys), `?` cheat sheet, `N` hints restored
+
+**Implementation notes (Day 2)**
+- **Search quality:** every word must match (AND). Words of 3 characters or fewer match exactly
+  (a typo in "git" is a 33% error — fuzzy matching short words only added noise); longer words
+  match fuzzily ("comit" → commit). Content is searched up to 1,500 characters per snippet.
+- **Palette ranking:** a command or collection whose name you are typing ranks above fuzzy snippet
+  hits ("settings" → Open Settings); "New snippet titled …" is always last.
+- **Large libraries:** the grid renders 48 cards at a time and adds more just before you scroll to the
+  end. Grid animations avoid Motion's layout projection, which profiling showed was the main cost
+  while typing. Measured with 600 snippets (production build): worst keystroke 1,152 ms → **40 ms**.
+- **No re-render storms:** card actions read the URL at call time instead of subscribing to it, so
+  typing in the search box doesn't re-render every card.
+- **Toasts** moved to bottom-left on desktop so they never cover the detail panel's buttons.
+- `react-hotkeys-hook` and `prism-react-renderer` from the plan were not needed (see the tech-stack table).
 
 ### Day 3 — Polish and ship
 - [ ] Export / Import (preview, merge/replace, error handling) in Settings

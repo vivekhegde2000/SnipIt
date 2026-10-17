@@ -58,10 +58,10 @@ Only free, open-source libraries are used (MIT / Apache-2.0 / ISC / OFL licences
 | Local database | Dexie.js + `dexie-react-hooks` (`useLiveQuery`) |
 | Search | Fuse.js (fuzzy, typo-tolerant) |
 | Command palette | cmdk (via the shadcn `Command` component) |
-| Keyboard shortcuts | react-hotkeys-hook |
+| Keyboard shortcuts | Small built-in handler + registry (`features/commands`), no library needed |
 | Code editor | CodeMirror 6 (`@uiw/react-codemirror`), lazy-loaded; grammars loaded per language (`@codemirror/lang-*`, `legacy-modes`) |
 | Animation | Motion (`motion/react`, MIT) with `LazyMotion` — features loaded lazily, honours reduced motion |
-| Code preview highlighting | prism-react-renderer |
+| Code preview highlighting | Same CodeMirror/Lezer grammars as the editor (one highlighter, identical colours), lazy-loaded |
 | Forms / validation | react-hook-form + zod |
 | Toasts | sonner |
 | Routing | React Router |

@@ -12,7 +12,9 @@ export function App() {
         <TooltipProvider delayDuration={300}>
           <RouterProvider router={router} />
           <Toaster
-            position="bottom-right"
+            // Bottom-left: the detail panel opens on the right and dialogs are centred, so toasts
+            // (often with an Undo action) never cover their primary buttons.
+            position="bottom-left"
             closeButton
             // Keep toasts clear of the mobile bottom navigation.
             mobileOffset={{

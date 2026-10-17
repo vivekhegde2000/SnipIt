@@ -1,6 +1,6 @@
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
+import { syntaxHighlighting } from '@codemirror/language'
 import { EditorView } from '@codemirror/view'
-import { tags as t } from '@lezer/highlight'
+import { syntaxHighlighter } from '../code/syntax-highlighter'
 
 const MONO_FONT = "'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', Consolas, monospace"
 
@@ -50,42 +50,5 @@ export const editorTheme = EditorView.theme({
   },
 })
 
-/** Token colours shared with read-only previews via the `--syntax-*` variables. */
-export const editorHighlighting = syntaxHighlighting(
-  HighlightStyle.define([
-    {
-      tag: [t.keyword, t.controlKeyword, t.definitionKeyword, t.moduleKeyword, t.operatorKeyword, t.modifier],
-      color: 'var(--syntax-keyword)',
-    },
-    { tag: [t.string, t.special(t.string), t.character, t.regexp], color: 'var(--syntax-string)' },
-    {
-      tag: [t.comment, t.lineComment, t.blockComment, t.docComment],
-      color: 'var(--syntax-comment)',
-      fontStyle: 'italic',
-    },
-    {
-      tag: [t.number, t.bool, t.null, t.atom, t.constant(t.variableName), t.unit],
-      color: 'var(--syntax-number)',
-    },
-    {
-      tag: [t.function(t.variableName), t.function(t.propertyName), t.macroName],
-      color: 'var(--syntax-function)',
-    },
-    { tag: [t.typeName, t.className, t.namespace, t.self], color: 'var(--syntax-type)' },
-    // Token types produced by legacy (stream) grammars: shell/PowerShell builtins, $variables, defs.
-    { tag: t.standard(t.variableName), color: 'var(--syntax-function)' },
-    { tag: [t.special(t.variableName), t.local(t.variableName)], color: 'var(--syntax-property)' },
-    { tag: t.definition(t.variableName), color: 'var(--syntax-type)' },
-    { tag: [t.operator, t.punctuation], color: 'color-mix(in oklch, var(--foreground) 70%, transparent)' },
-    { tag: [t.propertyName, t.definition(t.propertyName), t.labelName], color: 'var(--syntax-property)' },
-    { tag: [t.tagName, t.angleBracket], color: 'var(--syntax-tag)' },
-    { tag: t.attributeName, color: 'var(--syntax-attribute)' },
-    { tag: [t.meta, t.processingInstruction, t.documentMeta], color: 'var(--syntax-comment)' },
-    { tag: t.heading, color: 'var(--syntax-number)', fontWeight: '700' },
-    { tag: t.strong, fontWeight: '700' },
-    { tag: t.emphasis, fontStyle: 'italic' },
-    { tag: t.strikethrough, textDecoration: 'line-through' },
-    { tag: t.link, color: 'var(--syntax-function)', textDecoration: 'underline' },
-    { tag: t.invalid, color: 'var(--syntax-invalid)' },
-  ]),
-)
+/** Token colours: the shared tag → class mapping (styled by the `.sx-*` rules in index.css). */
+export const editorHighlighting = syntaxHighlighting(syntaxHighlighter)

@@ -1,14 +1,24 @@
-import { StreamLanguage, type StreamParser } from '@codemirror/language'
-import type { Extension } from '@codemirror/state'
+import { StreamLanguage, type Language, type LanguageSupport, type StreamParser } from '@codemirror/language'
 import type { LanguageId } from '@snipit/shared'
 
-type LanguageLoader = () => Promise<Extension>
+/**
+ * A loaded grammar. Both forms are valid editor extensions; `languageOf` gives the parser-bearing
+ * `Language` for standalone highlighting (card previews, detail view).
+ */
+export type LoadedLanguage = Language | LanguageSupport
 
-const legacy = (parser: StreamParser<unknown>): Extension => StreamLanguage.define(parser)
+type LanguageLoader = () => Promise<LoadedLanguage>
+
+const legacy = (parser: StreamParser<unknown>): Language => StreamLanguage.define(parser)
+
+export function languageOf(loaded: LoadedLanguage): Language {
+  return 'language' in loaded ? loaded.language : loaded
+}
 
 /**
- * Grammar loaders for each supported language. Each one is its own lazy chunk, so only the
- * languages a user actually opens are downloaded. `null` = no highlighting (plain text).
+ * Grammar loaders for each supported language, shared by the editor and the read-only previews.
+ * Each one is its own lazy chunk, so only the languages a user actually views are downloaded.
+ * `null` = no highlighting (plain text).
  *
  * Direct imports (instead of `@codemirror/language-data`) keep the build free of 100+ unused
  * language chunks and let Vite pre-bundle exactly these packages in dev.
@@ -43,10 +53,10 @@ const LOADERS: Record<LanguageId, LanguageLoader | null> = {
   toml: () => import('@codemirror/legacy-modes/mode/toml').then((m) => legacy(m.toml)),
 }
 
-const cache = new Map<LanguageId, Promise<Extension>>()
+const cache = new Map<LanguageId, Promise<LoadedLanguage>>()
 
-/** Loads (once) the editor extension for `language`; resolves `null` for plain text. */
-export function loadLanguage(language: LanguageId): Promise<Extension> | null {
+/** Loads (once) the grammar for `language`; returns `null` for plain text. */
+export function loadLanguage(language: LanguageId): Promise<LoadedLanguage> | null {
   const loader = LOADERS[language]
   if (!loader) return null
 

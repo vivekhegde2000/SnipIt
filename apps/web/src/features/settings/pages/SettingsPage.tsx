@@ -1,9 +1,13 @@
 import type { ReactNode } from 'react'
 import { m } from 'motion/react'
+import { Keyboard } from 'lucide-react'
 import { toast } from 'sonner'
 import type { LanguageId } from '@snipit/shared'
+import { Kbd } from '@/components/Kbd'
 import { PageHeader } from '@/components/PageHeader'
+import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { useAppCommands } from '@/features/commands/commands-context'
 import { useTheme } from '@/app/theme/theme-context'
 import { THEME_OPTIONS } from '@/app/theme/theme-options'
 import { getErrorMessage, settingsRepository } from '@/db'
@@ -44,6 +48,7 @@ export function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const settings = useSettings()
   const { counts, collections } = useLibrary()
+  const { openShortcuts } = useAppCommands()
 
   const updateDefaultLanguage = async (language: LanguageId) => {
     try {
@@ -101,6 +106,21 @@ export function SettingsPage() {
               value={settings.defaultLanguage}
               onChange={updateDefaultLanguage}
             />
+          </div>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Keyboard shortcuts"
+          description="Find, copy and manage snippets without leaving the keyboard."
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" onClick={openShortcuts}>
+              <Keyboard aria-hidden="true" />
+              View all shortcuts
+            </Button>
+            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              or press <Kbd keys={['?']} /> anywhere
+            </span>
           </div>
         </SettingsSection>
 

@@ -1,13 +1,17 @@
 import { useState, type ComponentProps, type ReactNode } from 'react'
 import { Link, useLocation, useMatch, useResolvedPath, useSearchParams } from 'react-router'
 import { AnimatePresence, LayoutGroup, m } from 'motion/react'
-import { ChevronDown, Hash, Plus } from 'lucide-react'
+import { ChevronDown, Hash, Plus, Search } from 'lucide-react'
 import { ColorDot } from '@/components/ColorDot'
+import { Kbd } from '@/components/Kbd'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { CollectionActionsMenu } from '@/features/collections/components/CollectionActionsMenu'
+import { useCollectionEditor } from '@/features/collections/editor/collection-editor-context'
+import { useAppCommands } from '@/features/commands/commands-context'
 import { useLibrary } from '@/features/library/library-context'
 import { parseTagParam, tagFilterHref } from '@/features/snippets/lib/select-snippets'
 import { useNewSnippet } from '@/features/snippets/use-new-snippet'
@@ -130,6 +134,8 @@ function RailNavItem({ item, onNavigate }: { item: NavItemConfig; onNavigate?: (
 export function Sidebar({ variant, onNavigate }: SidebarProps) {
   const { counts, collections, tags } = useLibrary()
   const newSnippet = useNewSnippet()
+  const commands = useAppCommands()
+  const collectionEditor = useCollectionEditor()
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const [showAllTags, setShowAllTags] = useState(false)
@@ -141,6 +147,14 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
       onNavigate?.()
       newSnippet.openNew()
     },
+  }
+  const openPalette = () => {
+    onNavigate?.()
+    commands.openPalette()
+  }
+  const createCollection = () => {
+    onNavigate?.()
+    collectionEditor.create()
   }
 
   if (variant === 'rail') {
@@ -156,11 +170,29 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
           </Link>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button size="icon-lg" aria-label="New snippet" {...newTriggerProps}>
+              <Button size="icon-lg" aria-label="New snippet" aria-keyshortcuts="N" {...newTriggerProps}>
                 <Plus className="size-5" aria-hidden="true" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">New snippet</TooltipContent>
+            <TooltipContent side="right">
+              New snippet <Kbd keys={['N']} className="ml-1" />
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-lg"
+                aria-label="Search and commands"
+                aria-keyshortcuts="Control+K Meta+K"
+                onClick={openPalette}
+              >
+                <Search className="size-[18px]" aria-hidden="true" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              Search <Kbd keys={['Mod', 'K']} className="ml-1" />
+            </TooltipContent>
           </Tooltip>
           <Separator className="my-1 w-8" />
           <nav aria-label="Library" className="flex flex-col items-center gap-1">
@@ -221,11 +253,25 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
           </Link>
         </div>
 
-        <div className="px-3">
-          <Button size="lg" className="w-full justify-start" {...newTriggerProps}>
+        <div className="space-y-2 px-3">
+          <Button size="lg" className="w-full justify-start" aria-keyshortcuts="N" {...newTriggerProps}>
             <Plus aria-hidden="true" />
             New snippet
+            <Kbd
+              keys={['N']}
+              className="ml-auto hidden border-white/20 bg-white/15 text-primary-foreground lg:inline-flex"
+            />
           </Button>
+          <button
+            type="button"
+            onClick={openPalette}
+            aria-keyshortcuts="Control+K Meta+K"
+            className="flex h-9 w-full items-center gap-2 rounded-lg border bg-background px-3 text-sm text-muted-foreground shadow-xs transition-colors hover:border-foreground/20 hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none pointer-coarse:h-10"
+          >
+            <Search className="size-4" aria-hidden="true" />
+            Search…
+            <Kbd keys={['Mod', 'K']} className="ml-auto hidden lg:inline-flex" />
+          </button>
         </div>
 
         <ScrollArea className="mt-4 min-h-0 flex-1">
@@ -250,31 +296,60 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
               <SectionHeading
                 id="sidebar-collections"
                 action={
-                  <Link
-                    to="/collections"
-                    onClick={onNavigate}
-                    className="rounded text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                  >
-                    View all
-                  </Link>
+                  <div className="flex items-center gap-1">
+                    <Link
+                      to="/collections"
+                      onClick={onNavigate}
+                      className="rounded px-1 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    >
+                      View all
+                    </Link>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label="New collection"
+                          onClick={createCollection}
+                          className="text-muted-foreground hover:text-foreground pointer-coarse:size-8"
+                        >
+                          <Plus aria-hidden="true" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">New collection</TooltipContent>
+                    </Tooltip>
+                  </div>
                 }
               >
                 Collections
               </SectionHeading>
               {collections.length === 0 ? (
-                <p className="px-3 py-1 text-xs text-muted-foreground">No collections yet.</p>
+                <button
+                  type="button"
+                  onClick={createCollection}
+                  className="mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                >
+                  <Plus className="size-3.5" aria-hidden="true" />
+                  Create your first collection
+                </button>
               ) : (
                 <nav aria-labelledby="sidebar-collections" className="space-y-0.5">
                   {collections.map((collection) => (
-                    <SidebarItem
-                      key={collection.id}
-                      to={`/collections/${collection.id}`}
-                      onClick={onNavigate}
-                    >
-                      <ColorDot color={collection.color} className="mx-[3px]" />
-                      <span className="truncate">{collection.name}</span>
-                      <Count value={counts.byCollection.get(collection.id) ?? 0} />
-                    </SidebarItem>
+                    // The ⋯ menu replaces the count on hover/focus (always shown on touch screens).
+                    <div key={collection.id} className="group/collection relative">
+                      <SidebarItem to={`/collections/${collection.id}`} onClick={onNavigate} className="pr-9">
+                        <ColorDot color={collection.color} className="mx-[3px]" />
+                        <span className="truncate">{collection.name}</span>
+                        <span className="ml-auto transition-opacity group-focus-within/collection:opacity-0 group-hover/collection:opacity-0 pointer-coarse:opacity-0">
+                          <Count value={counts.byCollection.get(collection.id) ?? 0} />
+                        </span>
+                      </SidebarItem>
+                      <CollectionActionsMenu
+                        collection={collection}
+                        triggerSize="icon-xs"
+                        triggerClassName="absolute top-1/2 right-1.5 -translate-y-1/2 opacity-0 transition-opacity group-focus-within/collection:opacity-100 group-hover/collection:opacity-100 data-[state=open]:opacity-100 pointer-coarse:size-8 pointer-coarse:opacity-100"
+                      />
+                    </div>
                   ))}
                 </nav>
               )}
@@ -288,9 +363,10 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
                     {visibleTags.map(({ tag, count }) => {
                       const isActive = activeTags.includes(tag)
                       return (
+                        // No `layout` here: it would make Motion re-measure the page on every
+                        // URL change (e.g. while typing a search).
                         <m.li
                           key={tag}
-                          layout="position"
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.9, transition: TRANSITION.fast }}

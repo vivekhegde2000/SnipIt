@@ -3,7 +3,7 @@ import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror'
 import type { Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import type { LanguageId } from '@snipit/shared'
-import { loadLanguage } from './code-languages'
+import { loadLanguage } from '../code/code-languages'
 import { editorHighlighting, editorTheme } from './code-editor-theme'
 import { EDITOR_HEIGHT } from './editor-constants'
 

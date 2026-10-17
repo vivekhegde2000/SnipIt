@@ -1,6 +1,7 @@
 import type { Ref } from 'react'
-import { FolderOpen } from 'lucide-react'
+import { FolderOpen, Plus } from 'lucide-react'
 import type { Collection } from '@snipit/shared'
+import { ColorDot } from '@/components/ColorDot'
 import {
   Select,
   SelectContent,
@@ -9,10 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ColorDot } from '@/components/ColorDot'
+import { useCollectionEditor } from '@/features/collections/editor/collection-editor-context'
 
 /** Radix Select forbids an empty-string value, so "no collection" needs a sentinel. */
 const NONE = '__none__'
+/** Pseudo-option that opens the "New collection" dialog instead of selecting. */
+const CREATE = '__create__'
 
 type CollectionSelectProps = {
   id?: string
@@ -24,8 +27,19 @@ type CollectionSelectProps = {
 }
 
 export function CollectionSelect({ id, value, onChange, collections, invalid, ref }: CollectionSelectProps) {
+  const collectionEditor = useCollectionEditor()
+
+  const handleValueChange = (next: string) => {
+    if (next === CREATE) {
+      // Create without leaving the snippet editor, then select the new collection.
+      collectionEditor.create({ onCreated: (created) => onChange(created.id) })
+      return
+    }
+    onChange(next === NONE ? null : next)
+  }
+
   return (
-    <Select value={value ?? NONE} onValueChange={(next) => onChange(next === NONE ? null : next)}>
+    <Select value={value ?? NONE} onValueChange={handleValueChange}>
       <SelectTrigger id={id} ref={ref} aria-invalid={invalid || undefined} className="w-full">
         <SelectValue />
       </SelectTrigger>
@@ -44,6 +58,11 @@ export function CollectionSelect({ id, value, onChange, collections, invalid, re
             </span>
           </SelectItem>
         ))}
+        <SelectSeparator />
+        <SelectItem value={CREATE} className="text-primary focus:text-primary">
+          <Plus aria-hidden="true" />
+          New collection…
+        </SelectItem>
       </SelectContent>
     </Select>
   )

@@ -67,13 +67,38 @@ export const collectionRepository = {
     })
   },
 
-  /** Soft-deletes the collection. Its snippets are kept and become unsorted. */
-  async softDelete(id: string): Promise<void> {
-    await db.transaction('rw', db.collections, db.snippets, async () => {
+  /**
+   * Soft-deletes the collection. Its snippets are kept and become unsorted.
+   * Returns the ids of those snippets so the deletion can be undone with {@link restore}.
+   */
+  async softDelete(id: string): Promise<{ snippetIds: string[] }> {
+    return db.transaction('rw', db.collections, db.snippets, async () => {
       const existing = await getActiveOrThrow(id)
       const now = Date.now()
+      const snippetIds = (await db.snippets.where('collectionId').equals(id).primaryKeys()) as string[]
       await db.collections.put({ ...existing, deletedAt: now, updatedAt: now })
       await db.snippets.where('collectionId').equals(id).modify({ collectionId: null, updatedAt: now })
+      return { snippetIds }
+    })
+  },
+
+  /**
+   * Undoes {@link softDelete}: restores the collection and moves its former snippets back —
+   * but only those still unsorted, so moves made in the meantime are respected.
+   */
+  async restore(id: string, snippetIds: readonly string[]): Promise<void> {
+    await db.transaction('rw', db.collections, db.snippets, async () => {
+      const existing = await db.collections.get(id)
+      if (!existing) throw new RepositoryError('NOT_FOUND', 'This collection no longer exists.')
+      if (existing.deletedAt === null) return
+      await assertUniqueName(existing.name, id)
+      const now = Date.now()
+      await db.collections.put({ ...existing, deletedAt: null, updatedAt: now })
+      await db.snippets
+        .where('id')
+        .anyOf([...snippetIds])
+        .filter((snippet) => snippet.deletedAt === null && snippet.collectionId === null)
+        .modify({ collectionId: id, updatedAt: now })
     })
   },
 }
