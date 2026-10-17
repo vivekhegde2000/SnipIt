@@ -315,45 +315,48 @@ Wrapped in a reusable `<CopyButton>` and a `useCopySnippet()` hook (copy, toast,
 
 ## 9. Folder structure (`apps/web/src`)
 
+Items marked *(Day 2/3)* are planned and don't exist yet.
+
 ```
 src/
 ├─ app/
-│  ├─ App.tsx                 # providers + router
-│  ├─ routes.tsx
-│  ├─ layouts/AppLayout.tsx   # sidebar / top bar / bottom nav / outlet
-│  └─ providers/ThemeProvider.tsx
+│  ├─ App.tsx                 # providers (theme, tooltips, toasts) + router
+│  ├─ router.tsx              # route table
+│  ├─ layout/                 # AppLayout, Sidebar (full + rail), MobileHeader, BottomNav,
+│  │                          #   NewSnippetFab, ThemeToggle, ScrollToTop, nav-items
+│  ├─ pages/                  # NotFoundPage, RouteErrorPage
+│  └─ theme/                  # ThemeProvider, theme-context, theme-storage, theme-options
 ├─ components/
-│  ├─ ui/                     # shadcn primitives: button, dialog, sheet, dropdown-menu, command, ...
-│  ├─ CopyButton.tsx
-│  ├─ CodeBlock.tsx           # highlighted, read-only
-│  ├─ TagInput.tsx
-│  ├─ TagBadge.tsx
-│  ├─ ColorDot.tsx
-│  ├─ EmptyState.tsx
-│  ├─ Kbd.tsx                 # renders key hints like ⌘K
-│  └─ ResponsiveDialog.tsx    # Dialog on desktop, bottom Sheet on mobile
+│  ├─ ui/                     # shadcn primitives (generated; edit sparingly)
+│  ├─ TagInput.tsx            # chip input + autocomplete combobox
+│  ├─ FormField.tsx           # label + hint + error wiring
+│  ├─ ConfirmDialog.tsx
+│  ├─ EmptyState.tsx  PageHeader.tsx  ColorDot.tsx  Kbd.tsx  Logo.tsx
+│  └─ CopyButton.tsx  CodeBlock.tsx  ResponsiveDialog.tsx        (Day 2)
 ├─ features/
+│  ├─ library/                # LibraryProvider (live data + counts + tags), sample-data hook
 │  ├─ snippets/
-│  │  ├─ components/          # SnippetCard, SnippetGrid, SnippetDetail, SnippetEditor, SnippetActionsMenu
-│  │  ├─ hooks/               # useSnippets, useSnippet, useCopySnippet, useSnippetMutations
-│  │  └─ lib/                 # normalizeTag, languages list, sample data
-│  ├─ collections/            # CollectionList, CollectionDialog, useCollections
-│  ├─ search/                 # SearchBar, FilterBar, CommandPalette, lib/searchSnippets.ts
-│  ├─ backup/                 # ExportButton, ImportDialog, lib/backup.ts (parse/validate/merge)
-│  └─ settings/               # SettingsPage, ShortcutsDialog, InstallAppCard
+│  │  ├─ editor/              # SnippetEditorProvider/Dialog, lazy CodeEditor, selects, loaders
+│  │  ├─ components/          # SnippetCard, SnippetGrid (+ SnippetDetail, actions menu: Day 2)
+│  │  ├─ lib/                 # select-snippets (view + filter logic)
+│  │  ├─ pages/               # SnippetsPage (all / favorites / recent / collection)
+│  │  └─ use-new-snippet.ts   # context-aware "new snippet"
+│  ├─ collections/            # CollectionsPage, colour classes (+ CollectionDialog: Day 2)
+│  ├─ settings/               # SettingsPage, use-settings
+│  ├─ search/                 # Fuse index, FilterBar, CommandPalette            (Day 2)
+│  └─ backup/                 # export / import                                   (Day 3)
 ├─ db/
 │  ├─ db.ts                   # Dexie instance + schema versions
-│  └─ repositories/           # snippetRepo.ts, collectionRepo.ts, settingsRepo.ts
-├─ lib/
-│  ├─ clipboard.ts
-│  ├─ shortcuts.ts            # shortcut registry
-│  ├─ dates.ts                # relative time via Intl.RelativeTimeFormat
-│  └─ utils.ts                # cn() helper etc.
-├─ styles/index.css           # Tailwind import + theme CSS variables
+│  ├─ errors.ts               # RepositoryError, parseOrThrow, getErrorMessage
+│  ├─ seed.ts                 # sample library
+│  └─ repositories/           # snippet-, collection-, settings-repository
+├─ hooks/                     # use-media-query (breakpoints), use-document-title
+├─ lib/                       # storage (safe localStorage), platform (⌘/Ctrl), dates, field-ids, utils
+├─ index.css                  # Tailwind + design tokens (light/dark, syntax colours)
 └─ main.tsx
 ```
 
-`packages/shared/src`: `schemas/snippet.ts`, `schemas/collection.ts`, `schemas/backup.ts`, `index.ts`.
+`packages/shared/src`: `constants.ts`, `languages.ts`, `tags.ts`, `id.ts`, `schemas.ts`, `index.ts`.
 
 ---
 
@@ -403,21 +406,31 @@ Each PR gets an automatic **deploy preview** URL.
 
 ## 12. Task checklist
 
-### Day 1 — Foundation
+### Day 1 — Foundation ✅
 - [x] Scaffold Vite + React + TS in `apps/web`, npm workspaces root
-- [ ] Add Prettier; confirm oxlint config
-- [ ] Tailwind CSS v4 (`@tailwindcss/vite`), `@/` path alias in `tsconfig` + `vite.config`
-- [ ] `shadcn init`; add button, input, textarea, dialog, sheet, dropdown-menu, command, select, badge, tooltip, sonner, skeleton
-- [ ] Theme tokens (zinc + indigo), Inter + JetBrains Mono, ThemeProvider (light/dark/system)
-- [ ] App shell: desktop sidebar, tablet rail, mobile top bar + Sheet + bottom nav + FAB
-- [ ] React Router routes + layout
-- [ ] `packages/shared`: zod schemas for Snippet, Collection, Backup
-- [ ] Dexie DB + repositories + `useSnippets` / `useCollections` hooks
-- [ ] Sample data loader (for development and the empty state)
-- [ ] `SnippetEditor` (react-hook-form + zod, lazy CodeMirror, `TagInput`, language and collection selects)
+- [x] Add Prettier; confirm oxlint config (`npm run check` = typecheck + lint + format check)
+- [x] Tailwind CSS v4 (`@tailwindcss/vite`), `@/` path alias in `tsconfig` + `vite.config`
+- [x] `shadcn init` (Radix base, Nova preset); add button, input, textarea, dialog, alert-dialog, sheet, dropdown-menu, command, select, popover, badge, tooltip, sonner, skeleton, separator, scroll-area
+- [x] Theme tokens (zinc + indigo, shared `--syntax-*` colours), Inter + JetBrains Mono, ThemeProvider (light/dark/system, no flash, synced across tabs)
+- [x] App shell: desktop sidebar, tablet rail, mobile top bar + Sheet + bottom nav + FAB
+- [x] React Router routes + layout + route error page + 404
+- [x] `packages/shared`: zod schemas for Snippet, Collection, Settings, Backup envelope; tag normalization; ids
+- [x] Dexie DB + repositories (validated writes, transactions) + `LibraryProvider` (one live query shared by the app)
+- [x] Sample data loader (for development and the empty state)
+- [x] `SnippetEditorDialog` (react-hook-form + zod, lazy CodeMirror, `TagInput`, language and collection selects, `Mod+S` save, discard guard)
+
+**Also delivered on Day 1 (ahead of plan):** basic `SnippetCard`/`SnippetGrid`, tag filter via `?tags=`,
+Collections page, Settings page (theme, default language, sample data), vendor chunk splitting,
+and idle-time preloading of the lazy editor.
+
+**Implementation notes**
+- `next-themes` was replaced by a small custom `ThemeProvider` plus an inline script in `index.html` (no flash of the wrong theme in a Vite SPA).
+- IndexedDB can't index `null` or booleans, so `deletedAt`/`isFavorite` are filtered in memory. The whole library is loaded once by `LibraryProvider` anyway (fuzzy search needs it in memory).
+- `recordCopy` doesn't bump `updatedAt`, so usage stats never win a Phase 2 sync conflict against a real edit.
+- Bundle: the initial app chunk is ~22 KB gzipped plus cacheable vendor chunks (React, data, UI). CodeMirror and the editor form load on demand.
 
 ### Day 2 — Core features
-- [ ] `SnippetCard` + `SnippetGrid` with highlighted, fading preview
+- [ ] `SnippetCard` + `SnippetGrid`: add syntax-highlighted preview (basic cards done on Day 1)
 - [ ] `SnippetDetail` panel/dialog
 - [ ] `CopyButton` + `useCopySnippet` (clipboard fallback, toast, copy stats)
 - [ ] Actions menu: edit, duplicate, favorite, move to collection, export, delete with Undo

@@ -2,11 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="SnipIt — save, search and one-click copy your reusable commands, queries, code and message templates."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SnipIt</title>
+    <script>
+      // Apply the saved theme before first paint to avoid a flash of the wrong theme.
+      // Keep the storage key in sync with src/app/theme/theme-storage.ts.
+      ;(function () {
+        try {
+          var stored = localStorage.getItem('snipit:theme')
+          var theme = stored === 'light' || stored === 'dark' ? stored : 'system'
+          var dark =
+            theme === 'dark' ||
+            (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          document.documentElement.classList.toggle('dark', dark)
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+        } catch (_) {}
+      })()
+    </script>
   </head>
   <body>
+    <noscript>SnipIt needs JavaScript enabled to run.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

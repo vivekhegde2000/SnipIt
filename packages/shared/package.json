@@ -1,0 +1,23 @@
+{
+  "name": "@snipit/shared",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Domain schemas, types and pure helpers shared by the SnipIt web app and API.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2"
+  }
+}

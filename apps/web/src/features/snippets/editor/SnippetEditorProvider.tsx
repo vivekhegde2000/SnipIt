@@ -1,0 +1,66 @@
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import type { SnippetFormValues } from '@snipit/shared'
+import { useSettings } from '@/features/settings/use-settings'
+import { loadSnippetEditorDialog, preloadEditorWhenIdle } from './editor-loader'
+import {
+  SnippetEditorContext,
+  type SnippetEditorApi,
+  type SnippetEditorRequest,
+} from './snippet-editor-context'
+
+// The form stack (react-hook-form, resolvers, editor UI) stays out of the initial bundle.
+const SnippetEditorDialog = lazy(() =>
+  loadSnippetEditorDialog().then((module) => ({ default: module.SnippetEditorDialog })),
+)
+
+type EditorSession = {
+  /** Increments per open, so every session mounts a fresh form. */
+  id: number
+  request: SnippetEditorRequest
+  open: boolean
+}
+
+/**
+ * Owns the single snippet editor dialog. The session stays mounted after closing so Radix can
+ * play the exit animation; the next open replaces it with a new key.
+ */
+export function SnippetEditorProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<EditorSession | null>(null)
+  // Read here (always mounted, so already resolved) rather than inside the freshly mounted dialog.
+  const { defaultLanguage } = useSettings()
+
+  useEffect(() => preloadEditorWhenIdle(), [])
+
+  const open = useCallback((request: SnippetEditorRequest) => {
+    setSession((current) => ({ id: (current?.id ?? 0) + 1, request, open: true }))
+  }, [])
+
+  const close = useCallback(() => {
+    setSession((current) => (current ? { ...current, open: false } : current))
+  }, [])
+
+  const api = useMemo<SnippetEditorApi>(
+    () => ({
+      openCreate: (defaults?: Partial<SnippetFormValues>) => open({ mode: 'create', defaults }),
+      openEdit: (snippetId: string) => open({ mode: 'edit', snippetId }),
+    }),
+    [open],
+  )
+
+  return (
+    <SnippetEditorContext value={api}>
+      {children}
+      {session && (
+        <Suspense fallback={null}>
+          <SnippetEditorDialog
+            key={session.id}
+            request={session.request}
+            open={session.open}
+            onClose={close}
+            defaultLanguage={defaultLanguage}
+          />
+        </Suspense>
+      )}
+    </SnippetEditorContext>
+  )
+}
