@@ -21,15 +21,41 @@ type IdleWindow = Window & {
 }
 
 /**
- * Warms the editor right after the app has painted, so the first "New snippet" opens instantly
- * without putting CodeMirror on the critical path. Returns a cancel function.
+ * Warms the editor once the page has loaded, the current content has been painted and the main
+ * thread is idle, so the first "New snippet" opens instantly without CodeMirror competing with
+ * the first paint for bandwidth or CPU. Intent (hover/focus/touch on a trigger) still preloads
+ * earlier. Returns a cancel function.
  */
 export function preloadCodeEditorAfterPaint(): () => void {
   const win = window as IdleWindow
-  if (win.requestIdleCallback && win.cancelIdleCallback) {
-    const handle = win.requestIdleCallback(preloadCodeEditor, { timeout: 1200 })
-    return () => win.cancelIdleCallback?.(handle)
+  let cancelScheduled = () => {}
+
+  const whenIdle = () => {
+    if (win.requestIdleCallback && win.cancelIdleCallback) {
+      const handle = win.requestIdleCallback(preloadCodeEditor, { timeout: 2000 })
+      cancelScheduled = () => win.cancelIdleCallback?.(handle)
+    } else {
+      const timer = window.setTimeout(preloadCodeEditor, 300)
+      cancelScheduled = () => window.clearTimeout(timer)
+    }
   }
-  const timer = window.setTimeout(preloadCodeEditor, 300)
-  return () => window.clearTimeout(timer)
+
+  // Idle callbacks can run before the next frame is painted; the second animation frame starts
+  // only after the frame with the freshly rendered content has been presented.
+  const schedule = () => {
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(whenIdle)
+    })
+    cancelScheduled = () => cancelAnimationFrame(frame)
+  }
+
+  if (document.readyState === 'complete') {
+    schedule()
+    return () => cancelScheduled()
+  }
+  window.addEventListener('load', schedule, { once: true })
+  return () => {
+    window.removeEventListener('load', schedule)
+    cancelScheduled()
+  }
 }

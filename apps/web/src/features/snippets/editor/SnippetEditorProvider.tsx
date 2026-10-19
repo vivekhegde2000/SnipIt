@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { SnippetFormValues } from '@snipit/shared'
+import { useLibrary } from '@/features/library/library-context'
 import { useSettings } from '@/features/settings/use-settings'
 import { preloadCodeEditor, preloadCodeEditorAfterPaint } from './editor-loader'
 import { SnippetEditorDialog } from './SnippetEditorDialog'
@@ -20,7 +21,7 @@ type EditorSession = {
  * Owns the single snippet editor dialog.
  *
  * Performance: the dialog and form ship in the main bundle so opening is instant; only CodeMirror
- * is code-split, and it is preloaded right after first paint (and again on hover/focus intent).
+ * is code-split, and it is preloaded once the library has rendered (earlier on hover/focus intent).
  * The session stays mounted after closing so the exit animation can play; the next open replaces
  * it with a new key.
  */
@@ -28,8 +29,10 @@ export function SnippetEditorProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<EditorSession | null>(null)
   // Read here (always mounted, so already resolved) rather than inside the freshly mounted dialog.
   const { defaultLanguage } = useSettings()
+  const { isLoading } = useLibrary()
 
-  useEffect(() => preloadCodeEditorAfterPaint(), [])
+  // Warm CodeMirror only once the library is on screen, so it never competes with first content.
+  useEffect(() => (isLoading ? undefined : preloadCodeEditorAfterPaint()), [isLoading])
 
   const open = useCallback((request: SnippetEditorRequest) => {
     setSession((current) => ({ id: (current?.id ?? 0) + 1, request, open: true }))

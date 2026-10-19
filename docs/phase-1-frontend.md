@@ -303,15 +303,14 @@ Wrapped in a reusable `<CopyButton>` and a `useCopySnippet()` hook (copy, toast,
 ## 8. PWA
 
 - **vite-plugin-pwa** with `registerType: 'prompt'`: when a new version is deployed, show the "Update
-  available · Reload" toast instead of reloading silently. *(Check its peer-dependency support for
-  Vite 8 at install time.)*
+  available · Reload" toast instead of reloading silently. (vite-plugin-pwa 2.0 supports Vite 8.)
 - **Manifest:** name "SnipIt", `display: standalone`, `theme_color` and `background_color` matching the
   theme, icons 192/512 + maskable + Apple touch icon (generated with `@vite-pwa/assets-generator` from one SVG).
 - **Offline:** precache the app shell, fonts and lazy chunks. All data lives in IndexedDB, so everything works offline.
 - **Install button** in Settings (uses the `beforeinstallprompt` event where supported; iOS shows
   "Share → Add to Home Screen" instructions).
-- **Storage persistence:** call `navigator.storage.persist()` after the first snippet is saved, and show
-  usage via `navigator.storage.estimate()` in Settings.
+- **Storage persistence:** call `navigator.storage.persist()` once the library has its first snippet, and
+  show usage via `navigator.storage.estimate()` in Settings (with a "Protect my data" button).
   > ⚠️ Safari can delete site data after ~7 days of no use **unless the app is installed to the home screen.**
   > The backup reminder and the install prompt mitigate this. Phase 2 sync removes the risk completely.
 
@@ -319,15 +318,14 @@ Wrapped in a reusable `<CopyButton>` and a `useCopySnippet()` hook (copy, toast,
 
 ## 9. Folder structure (`apps/web/src`)
 
-Items marked *(Day 3)* are planned and don't exist yet.
-
 ```
 src/
 ├─ app/
-│  ├─ App.tsx                 # providers (theme, motion, tooltips, toasts) + router
-│  ├─ router.tsx              # route table
+│  ├─ App.tsx                 # providers (theme, motion, tooltips, toasts, PWA updater) + router
+│  ├─ router.tsx              # route table (Settings is lazy-loaded)
 │  ├─ layout/                 # AppLayout, Sidebar (full + rail), MobileHeader, BottomNav,
-│  │                          #   NewSnippetFab, ThemeToggle, ScrollToTop, nav-items
+│  │                          #   NewSnippetFab, ThemeToggle, ScrollToTop, nav-items,
+│  │                          #   AppLaunchEffects (?new=1 shortcut, storage persistence)
 │  ├─ motion/                 # MotionProvider (LazyMotion), lazily loaded feature bundle
 │  ├─ pages/                  # NotFoundPage, RouteErrorPage
 │  └─ theme/                  # ThemeProvider, theme-context, theme-storage, theme-options
@@ -336,7 +334,7 @@ src/
 │  ├─ CopyButton.tsx  FavoriteButton.tsx  HighlightText.tsx  RadioGrid.tsx
 │  ├─ TagInput.tsx            # chip input + autocomplete combobox
 │  ├─ FormField.tsx  ConfirmDialog.tsx
-│  └─ EmptyState.tsx  PageHeader.tsx  ColorDot.tsx  Kbd.tsx  Logo.tsx
+│  └─ EmptyState.tsx  PageHeader.tsx  ColorDot.tsx  Kbd.tsx  Logo.tsx  OfflineBadge.tsx
 ├─ features/
 │  ├─ library/                # LibraryProvider (live data + counts + tags)
 │  ├─ snippets/
@@ -351,19 +349,27 @@ src/
 │  │  └─ pages/               # SnippetsPage (all / favorites / recent / collection)
 │  ├─ collections/            # CollectionsPage, editor (dialog, provider), actions menu
 │  ├─ commands/               # CommandPalette, ShortcutsDialog, global shortcuts, registry
-│  ├─ settings/               # SettingsPage, DeleteAllDataDialog, use-settings
-│  └─ backup/                 # export / import                                   (Day 3)
+│  ├─ settings/               # SettingsPage, DeleteAllDataDialog, StorageSection, use-settings
+│  ├─ backup/                 # BackupProvider (file picker, drag & drop, import dialog host),
+│  │  ├─ components/          #   ImportDialog, BackupSection (Settings), BackupReminder
+│  │  └─ lib/                 #   backup-format (export/parse/validate), import-plan (pure
+│  │                          #   merge/replace planning), backup-io (Dexie transaction, download)
+│  └─ pwa/                    # install-prompt, InstallAppSection, PwaUpdater (update/offline toasts)
 ├─ db/
 │  ├─ db.ts                   # Dexie instance + schema versions
 │  ├─ errors.ts               # RepositoryError, parseOrThrow, getErrorMessage
 │  ├─ maintenance.ts          # deleteAllData
 │  └─ repositories/           # snippet-, collection-, settings-repository
-├─ hooks/                     # use-media-query, use-document-title, use-delayed-flag
+├─ hooks/                     # use-media-query, use-document-title, use-delayed-flag,
+│                             #   use-online-status, use-hide-on-scroll
 ├─ lib/                       # clipboard, download, keyboard, motion, layout, storage, platform,
-│                             #   dates, field-ids, utils
+│                             #   dates, field-ids, persistent-storage, initial-screen, utils
 ├─ index.css                  # Tailwind + design tokens (light/dark, syntax colours)
 └─ main.tsx
 ```
+
+Outside `src/`: `public/` (icons generated by `pwa-assets.config.ts`, `theme-init.js`, `robots.txt`),
+`vite-plugins/bundle-guard.ts` (build-time bundle checks) and `index.html` (boot splash).
 
 `packages/shared/src`: `constants.ts`, `languages.ts`, `tags.ts`, `id.ts`, `schemas.ts`, `index.ts`.
 
@@ -378,6 +384,25 @@ src/
 | Search latency with 2 000 snippets | < 50 ms per keystroke |
 | Accessibility | Keyboard-only usable, visible focus rings, labelled icon buttons, `aria-live` for toasts |
 
+**Measured at the end of Day 3** (production build, Lighthouse 12, Edge):
+
+| Metric | Result |
+|---|---|
+| Lighthouse desktop | Performance **98**, Accessibility **100**, Best Practices **100**, SEO **100** |
+| Lighthouse mobile (simulated slow 4G, 4× CPU) | Performance **76–78**, Accessibility **100**, Best Practices **100**, SEO **100** |
+| Initial JS (gzip) | ~315 KB: app 95 KB + React 99 KB + data (Dexie, zod) 56 KB + UI (Radix, sonner) 64 KB |
+| axe (WCAG 2.2 A/AA) | 0 violations, every page and dialog, light and dark, desktop and mobile |
+
+Mobile performance is below the ≥ 95 target. The app has to download and run its JavaScript
+before it can read IndexedDB and show the library, and Lighthouse's mobile profile simulates a
+slow phone. The remaining options are architectural, not tuning:
+- lazy-load the editor form, command palette and dialogs (about −25 KB gzip, but the first open of
+  each gets slower, which is what the Day 1 review asked us to fix), or
+- move to lighter libraries (for example Preact or no Radix), which is a large rewrite.
+
+After the first visit everything is served by the service worker, so repeat visits start
+instantly, even offline.
+
 ### Testing
 | Layer | What | Tools |
 |---|---|---|
@@ -386,26 +411,24 @@ src/
 | Data | Repositories against an in-memory IndexedDB | `fake-indexeddb` |
 | E2E (optional) | Create, then search, then copy; import/export round-trip; mobile viewport | Playwright |
 
+> Automated tests were **not added** in Phase 1, at the project owner's request. Each day was
+> verified instead with scripted browser checks against the production build (not committed).
+
 ---
 
 ## 11. Deployment (Netlify)
 
-`netlify.toml` at the repo root:
-```toml
-[build]
-  command = "npm run build"
-  publish = "apps/web/dist"
+[`netlify.toml`](../netlify.toml) at the repo root sets:
+- **Build:** `npm run build`, publish `apps/web/dist`, Node 22.
+- **SPA fallback:** every unknown path serves `index.html`.
+- **Security headers:** a strict Content Security Policy (`script-src 'self'`: no inline scripts and
+  no eval), `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, COOP and
+  `Permissions-Policy`.
+- **Caching:** hashed `/assets/*` are immutable for a year. `index.html`, `sw.js`,
+  `manifest.webmanifest` and `theme-init.js` are always revalidated, so new deploys and the
+  update prompt are picked up.
 
-[build.environment]
-  NODE_VERSION = "22"
-
-# SPA fallback: every unknown path serves index.html
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-```
-Steps: push to GitHub → Netlify "Add new site → Import from Git" → select repo → deploy.
+Steps: push to GitHub → Netlify "Add new site → Import an existing project" → select repo → deploy.
 Each PR gets an automatic **deploy preview** URL.
 
 > If you ever switch to GitHub Pages: set `base: '/SnipIt/'` in `vite.config.ts`, use a matching PWA
@@ -433,7 +456,7 @@ Collections page, Settings page (theme, default language, sample data), vendor c
 and idle-time preloading of the lazy editor.
 
 **Implementation notes**
-- `next-themes` was replaced by a small custom `ThemeProvider` plus an inline script in `index.html` (no flash of the wrong theme in a Vite SPA).
+- `next-themes` was replaced by a small custom `ThemeProvider` plus a tiny pre-paint script (no flash of the wrong theme in a Vite SPA). It was inline on Day 1 and moved to `public/theme-init.js` on Day 3 for the CSP.
 - IndexedDB can't index `null` or booleans, so `deletedAt`/`isFavorite` are filtered in memory. The whole library is loaded once by `LibraryProvider` anyway (fuzzy search needs it in memory).
 - `recordCopy` doesn't bump `updatedAt`, so usage stats never win a Phase 2 sync conflict against a real edit.
 - Bundle (after Day 1.5): app chunk ~60 KB gzipped (includes the editor form, so it opens instantly) plus cacheable vendor chunks (React, data, UI). CodeMirror (~35 KB + grammars) and Motion's feature bundle (~32 KB) load lazily.
@@ -480,16 +503,61 @@ navigation 24–32 ms. Dev mode was 520–650 ms for the first open before the f
 - **Toasts** moved to bottom-left on desktop so they never cover the detail panel's buttons.
 - `react-hotkeys-hook` and `prism-react-renderer` from the plan were not needed (see the tech-stack table).
 
-### Day 3 — Polish and ship
-- [ ] Export / Import (preview, merge/replace, error handling) in Settings
-- [ ] PWA: manifest, generated icons, offline precache, update prompt, install card
-- [ ] Storage persistence + backup reminder
-- [ ] Empty, no-results, offline and loading states
-- [ ] Accessibility pass (keyboard only, screen reader labels, contrast) in both themes
-- [ ] Responsive QA at 360, 768, 1024 and 1440 px
-- [ ] Unit and component tests for logic-heavy code
-- [ ] `netlify.toml`, first deploy, Lighthouse check
-- [ ] Root README: screenshots/GIF, features, shortcuts, tech stack, live link
+### Day 3 — Polish and ship ✅ (deploy pending)
+- [x] Export / Import (preview, merge/replace, error handling) in Settings, plus the command palette,
+      collection menu (export one collection), welcome screen and drag & drop anywhere
+- [x] PWA: manifest (with app shortcuts), generated icons, offline precache, update prompt, install card
+- [x] Storage persistence + backup reminder
+- [x] Empty, no-results, offline (badge) and loading states (plus a boot splash before the JS loads)
+- [x] Accessibility pass (keyboard only, screen reader labels, contrast) in both themes: axe reports 0 violations
+- [x] Responsive QA at 360, 768, 1024 and 1440 px: no horizontal overflow anywhere
+- [ ] ~~Unit and component tests for logic-heavy code~~ (skipped at the project owner's request)
+- [x] `netlify.toml` and Lighthouse check. **First deploy: to be done by the project owner.**
+- [x] Root README: screenshots, features, shortcuts, tech stack, deploy steps (live link to add after deploy)
+
+**Implementation notes (Day 3)**
+- **Backup format:** `{ app: "snipit", version: 1, exportedAt, collections, snippets }`. Only active
+  records are exported. Import refuses files over 25 MB, non-JSON, non-SnipIt and newer-version
+  files with clear messages. Each record is validated on its own: damaged ones are counted and
+  skipped, and duplicate ids are de-duplicated.
+- **Merge rules** (`import-plan.ts`, a pure function used by both the preview and the import):
+  - the newer `updatedAt` wins; copy stats take the maximum;
+  - a snippet deleted locally is restored by importing it;
+  - a collection with the same name (case-insensitive) merges into the existing one, and its
+    snippets are re-pointed to it;
+  - references to missing collections are cleared.
+
+  **Replace** first downloads a safety backup automatically, then swaps everything in one
+  transaction. The import re-plans inside the transaction, so edits made after the preview are
+  never overwritten blindly.
+- **PWA:** `registerType: 'prompt'` with an hourly update check. The first install shows a "ready to
+  work offline" toast. Lazy chunks (editor, grammars, Settings) are precached, so everything works
+  offline. Icons are generated from `public/logo.svg` by `@vite-pwa/assets-generator`. The manifest
+  shortcut `/?new=1` opens the editor.
+- **CSP:** the theme bootstrap moved from an inline script to `public/theme-init.js`, and zod runs
+  `jitless`, so the policy needs neither `'unsafe-inline'` scripts nor `'unsafe-eval'`. The backup
+  and PWA checks ran with this exact policy enforced.
+- **Accessibility fixes:** darker light-theme `--muted-foreground` and `--destructive` (contrast ≥
+  4.5:1 on tinted surfaces), card titles are `h2` (correct heading order), and card Copy buttons
+  are named "Copy <title>".
+- **Responsive fixes:** the toolbar stacks search above the filters until `xl`, so the search field is
+  never squeezed on tablets. The phone FAB hides while you scroll down, so it never covers a card's
+  Copy button for long.
+- **Start-up performance:**
+  - `index.html` paints a boot splash with the first CSS.
+  - IndexedDB opens in parallel with the first render.
+  - Content on the first screen of a visit renders without entrance animations
+    (`lib/initial-screen.ts`), so it doesn't wait for the lazy Motion features.
+  - CodeMirror is preloaded only after the library has painted.
+  - Settings and the import dialog are lazy chunks.
+- **Build safety:** `vite.config.ts` resolves the app from its canonical on-disk path. On Windows, a
+  terminal reporting `d:\` instead of `D:\` made Vite bundle React twice, and the production build
+  showed a blank page ("Cannot read properties of null (reading 'useCallback')").
+  `vite-plugins/bundle-guard.ts` now fails the build on duplicate (case-variant) modules or chunk
+  import cycles.
+- **Verified** on the production build in Edge, by scripted checks (not committed): backup/restore
+  (20 checks, CSP enforced), PWA/offline (13), axe in both themes, responsive layouts, and the Day 2
+  and Day 1.5 regression suites. No console errors.
 
 ### Phase 1.5 — Stretch (optional)
 - [ ] Template variables `{{name}}` with a fill-in form before copy

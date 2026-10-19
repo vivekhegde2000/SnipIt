@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { m } from 'motion/react'
+import { useEntranceAnimation } from '@/lib/initial-screen'
 import { TRANSITION } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
@@ -14,9 +15,10 @@ type EmptyStateProps = {
 }
 
 export function EmptyState({ icon: Icon, title, description, children, className }: EmptyStateProps) {
+  const enter = useEntranceAnimation()
   return (
     <m.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={enter ? { opacity: 0, y: 8 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={TRANSITION.base}
       className={cn(
@@ -25,7 +27,7 @@ export function EmptyState({ icon: Icon, title, description, children, className
       )}
     >
       <m.div
-        initial={{ scale: 0.8, opacity: 0 }}
+        initial={enter ? { scale: 0.8, opacity: 0 } : false}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ ...TRANSITION.pop, delay: 0.05 }}
         className="mb-5 grid size-14 place-items-center rounded-2xl bg-accent text-accent-foreground ring-8 ring-accent/40"

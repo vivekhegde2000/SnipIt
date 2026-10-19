@@ -67,7 +67,8 @@ Only free, open-source libraries are used (MIT / Apache-2.0 / ISC / OFL licences
 | Routing | React Router |
 | PWA | vite-plugin-pwa (Workbox) + `@vite-pwa/assets-generator` |
 | Fonts | Inter + JetBrains Mono via `@fontsource-variable/*` (self-hosted, so they work offline) |
-| Testing | Vitest, React Testing Library, `fake-indexeddb`; Playwright (optional, e2e) |
+| Testing | Planned: Vitest, React Testing Library, `fake-indexeddb`, Playwright. Not added in Phase 1 at the project owner's request; each day was verified with scripted browser checks instead |
+| Hosting | Netlify (`netlify.toml`: build, SPA fallback, security headers incl. a strict CSP, caching) |
 
 ### Backend — `apps/api` (Phase 2)
 | Need | Library |
@@ -87,12 +88,12 @@ Only free, open-source libraries are used (MIT / Apache-2.0 / ISC / OFL licences
 ```
 SnipIt/
 ├─ apps/
-│  ├─ web/                 # React PWA (Phase 1)  ← scaffolded
+│  ├─ web/                 # React PWA (Phase 1, complete)
 │  └─ api/                 # Express + Prisma API (Phase 2)
 ├─ packages/
 │  └─ shared/              # zod schemas + TS types shared by web and api
-├─ docs/                   # ← you are here
-├─ netlify.toml            # build + redirects (added in Phase 1 deploy step)
+├─ docs/                   # ← you are here (screenshots/ for the README)
+├─ netlify.toml            # build, SPA fallback, security headers, caching
 ├─ package.json            # npm workspaces root
 ├─ .editorconfig  .gitignore  .nvmrc
 └─ README.md
@@ -131,5 +132,6 @@ nvm use            # Node 22 (see .nvmrc); requires Node >= 22.12
 npm install        # installs all workspaces
 npm run dev        # starts the web app at http://localhost:5173
 npm run build      # type-check + production build
-npm run lint       # oxlint
+npm run preview    # serve the production build (offline mode / install only work here)
+npm run check      # type-check + oxlint + Prettier check
 ```

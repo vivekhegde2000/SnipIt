@@ -1,0 +1,64 @@
+# Netlify configuration for SnipIt (static PWA; no server-side code).
+# Docs: https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  command = "npm run build"
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA fallback: unknown paths serve the app (React Router handles them).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# ---------------------------------------------------------------------------------------------
+# Security headers (every response)
+# ---------------------------------------------------------------------------------------------
+# CSP notes:
+# - script-src 'self': no inline scripts (the theme bootstrap lives in /theme-init.js) and no eval
+#   (zod runs in "jitless" mode, see src/main.tsx).
+# - style-src 'unsafe-inline' is needed for inline style attributes (animations, Radix positioning).
+# - blob: is used for backup downloads; data: for small inline images/fonts.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+
+# ---------------------------------------------------------------------------------------------
+# Caching
+# ---------------------------------------------------------------------------------------------
+# Hashed build assets never change → cache forever.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Entry points must always be revalidated so new deploys (and the update prompt) are picked up.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Content-Type = "application/manifest+json"
+
+[[headers]]
+  for = "/theme-init.js"
+  [headers.values]
+    Cache-Control = "no-cache"

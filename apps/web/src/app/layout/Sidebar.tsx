@@ -5,6 +5,7 @@ import { ChevronDown, Hash, Plus, Search } from 'lucide-react'
 import { ColorDot } from '@/components/ColorDot'
 import { Kbd } from '@/components/Kbd'
 import { Logo } from '@/components/Logo'
+import { OfflineBadge } from '@/components/OfflineBadge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
@@ -226,6 +227,7 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
             </>
           )}
           <div className="mt-auto flex flex-col items-center gap-1 pt-2">
+            <OfflineBadge variant="icon" />
             <RailNavItem item={SETTINGS_NAV} onNavigate={onNavigate} />
             <ThemeToggle side="right" align="end" />
           </div>
@@ -420,6 +422,7 @@ export function Sidebar({ variant, onNavigate }: SidebarProps) {
             <SETTINGS_NAV.icon className="size-4" aria-hidden="true" />
             {SETTINGS_NAV.label}
           </SidebarItem>
+          <OfflineBadge />
           <ThemeToggle side="top" />
         </div>
       </div>

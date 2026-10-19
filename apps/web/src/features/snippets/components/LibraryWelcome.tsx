@@ -1,6 +1,8 @@
 import { m } from 'motion/react'
-import { Code2, Plus, ShieldCheck, Tags, type LucideIcon } from 'lucide-react'
+import { Code2, Plus, ShieldCheck, Tags, Upload, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useBackup } from '@/features/backup/backup-context'
+import { useEntranceAnimation } from '@/lib/initial-screen'
 import { STAGGER_STEP, TRANSITION } from '@/lib/motion'
 import type { NewSnippetTrigger } from '../use-new-snippet'
 
@@ -80,10 +82,12 @@ function WelcomeIllustration() {
 
 /** First-run screen: what SnipIt is for, and one clear action. */
 export function LibraryWelcome({ trigger }: { trigger: NewSnippetTrigger }) {
+  const { chooseImportFile } = useBackup()
+  const enter = useEntranceAnimation()
   return (
     <m.section
       aria-labelledby="welcome-title"
-      initial={{ opacity: 0, y: 10 }}
+      initial={enter ? { opacity: 0, y: 10 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={TRANSITION.base}
       className="relative overflow-hidden rounded-3xl border bg-card px-6 py-12 text-center shadow-xs sm:px-10 sm:py-16"
@@ -95,7 +99,7 @@ export function LibraryWelcome({ trigger }: { trigger: NewSnippetTrigger }) {
       />
       <m.div
         className="relative mx-auto flex justify-center"
-        initial={{ opacity: 0, scale: 0.94 }}
+        initial={enter ? { opacity: 0, scale: 0.94 } : false}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ ...TRANSITION.pop, delay: 0.05 }}
       >
@@ -113,10 +117,15 @@ export function LibraryWelcome({ trigger }: { trigger: NewSnippetTrigger }) {
         Save the commands, queries and message templates you reuse — then find and copy them in seconds.
       </p>
 
-      <div className="relative mt-7 flex justify-center">
+      <div className="relative mt-7 flex flex-wrap justify-center gap-2">
         <Button size="lg" {...trigger.triggerProps}>
           <Plus aria-hidden="true" />
           Create your first snippet
+        </Button>
+        {/* Restoring onto a new device or browser starts here. */}
+        <Button size="lg" variant="outline" onClick={chooseImportFile}>
+          <Upload aria-hidden="true" />
+          Import a backup
         </Button>
       </div>
 
@@ -124,7 +133,7 @@ export function LibraryWelcome({ trigger }: { trigger: NewSnippetTrigger }) {
         {HIGHLIGHTS.map(({ icon: Icon, title, text }, index) => (
           <m.li
             key={title}
-            initial={{ opacity: 0, y: 8 }}
+            initial={enter ? { opacity: 0, y: 8 } : false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...TRANSITION.base, delay: 0.15 + index * STAGGER_STEP * 2 }}
             className="rounded-2xl border bg-background/60 p-4"

@@ -3,34 +3,58 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>SnipIt — Snippet manager</title>
     <meta
       name="description"
-      content="SnipIt — save, search and one-click copy your reusable commands, queries, code and message templates."
+      content="SnipIt — save, search and one-click copy your reusable commands, queries, code and message templates. Works offline."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>SnipIt</title>
-    <script>
-      // Apply the saved theme before first paint to avoid a flash of the wrong theme.
-      // Keep the storage key in sync with src/app/theme/theme-storage.ts.
-      ;(function () {
-        try {
-          var stored = localStorage.getItem('snipit:theme')
-          var theme = stored === 'light' || stored === 'dark' ? stored : 'system'
-          var dark =
-            theme === 'dark' ||
-            (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-          document.documentElement.classList.toggle('dark', dark)
-          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
-        } catch (_) {}
-      })()
-    </script>
+    <meta name="apple-mobile-web-app-title" content="SnipIt" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/logo.svg" sizes="any" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+    <!-- Must run before first paint, so it is a classic (blocking) script. -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <noscript>SnipIt needs JavaScript enabled to run.</noscript>
-    <div id="root"></div>
+    <div id="root">
+      <!--
+        Boot splash: painted with the first CSS, before the app's JavaScript has downloaded.
+        React replaces it on first render. Inline SVG = no extra request.
+      -->
+      <div class="grid min-h-dvh place-items-center" role="status">
+        <div class="flex flex-col items-center gap-4">
+          <svg viewBox="0 0 512 512" class="size-16 drop-shadow-lg" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="boot-logo" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#6366f1" />
+                <stop offset="1" stop-color="#7c3aed" />
+              </linearGradient>
+            </defs>
+            <rect width="512" height="512" rx="112" fill="url(#boot-logo)" />
+            <g
+              transform="translate(256 256) rotate(-90) translate(-120 -120) scale(10)"
+              fill="none"
+              stroke="#fff"
+              stroke-width="2.25"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="6" cy="6" r="3" />
+              <path d="M8.12 8.12 12 12" />
+              <path d="M20 4 8.12 15.88" />
+              <circle cx="6" cy="18" r="3" />
+              <path d="M14.8 14.8 20 20" />
+            </g>
+          </svg>
+          <span class="text-lg font-semibold tracking-tight">SnipIt</span>
+          <span class="sr-only">Loading…</span>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

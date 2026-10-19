@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { Menu, Search } from 'lucide-react'
 import { Logo } from '@/components/Logo'
+import { OfflineBadge } from '@/components/OfflineBadge'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useAppCommands } from '@/features/commands/commands-context'
@@ -39,16 +40,13 @@ export function MobileHeader() {
           <Logo />
         </Link>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="ml-auto"
-          aria-label="Search and commands"
-          onClick={openPalette}
-        >
-          <Search className="size-5" aria-hidden="true" />
-        </Button>
-        <ThemeToggle />
+        <div className="ml-auto flex items-center gap-1">
+          <OfflineBadge variant="icon" />
+          <Button variant="ghost" size="icon" aria-label="Search and commands" onClick={openPalette}>
+            <Search className="size-5" aria-hidden="true" />
+          </Button>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )

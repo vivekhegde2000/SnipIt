@@ -2,6 +2,7 @@ import { memo, useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { AnimatePresence, m } from 'motion/react'
 import type { Collection, Snippet } from '@snipit/shared'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useEntranceAnimation } from '@/lib/initial-screen'
 import { focusAdjacentCard, isEditableTarget } from '@/lib/keyboard'
 import { SNIPPET_GRID } from '@/lib/layout'
 import { STAGGER_LIMIT, STAGGER_STEP, TRANSITION } from '@/lib/motion'
@@ -80,7 +81,9 @@ export const SnippetGrid = memo(function SnippetGrid({
     if (isNewQuery) setLimit(PAGE_SIZE) // new query/view → back to the first batch
   }
 
-  // Stagger only the cards present when the grid mounts; later additions simply fade in.
+  // Stagger only the cards present when the grid mounts (not on the first screen of a visit);
+  // later additions simply fade in.
+  const enterOnMount = useEntranceAnimation()
   const [initialIds] = useState(() => new Set(snippets.slice(0, STAGGER_LIMIT).map((s) => s.id)))
   const shown = snippets.length > limit ? snippets.slice(0, limit) : snippets
   const hasMore = shown.length < snippets.length
@@ -104,7 +107,7 @@ export const SnippetGrid = memo(function SnippetGrid({
   return (
     <>
       <ul className={SNIPPET_GRID} aria-label="Snippets" onKeyDown={handleGridKeyDown}>
-        <AnimatePresence initial={animate} custom={instantExit || !animate}>
+        <AnimatePresence initial={animate && enterOnMount} custom={instantExit || !animate}>
           {shown.map((snippet, index) => (
             // `grid` makes the card fill the row height, so cards in a row line up.
             <m.li

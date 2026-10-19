@@ -3,18 +3,21 @@ import { useNavigate } from 'react-router'
 import { Command } from 'cmdk'
 import {
   Clock,
+  Download,
   FileCode2,
   FolderOpen,
   FolderPlus,
   Keyboard,
   Layers,
   Monitor,
+  MonitorDown,
   Moon,
   Plus,
   Search,
   Settings,
   Star,
   Sun,
+  Upload,
   type LucideIcon,
 } from 'lucide-react'
 import { getLanguageLabel, type Snippet } from '@snipit/shared'
@@ -23,7 +26,9 @@ import { HighlightText } from '@/components/HighlightText'
 import { Kbd } from '@/components/Kbd'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { useTheme } from '@/app/theme/theme-context'
+import { useBackup } from '@/features/backup/backup-context'
 import { useCollectionEditor } from '@/features/collections/editor/collection-editor-context'
+import { promptInstall, useInstallState } from '@/features/pwa/install-prompt'
 import { useLibrary } from '@/features/library/library-context'
 import { useSnippetActions } from '@/features/snippets/actions/use-snippet-actions'
 import { useSnippetEditor } from '@/features/snippets/editor/snippet-editor-context'
@@ -84,6 +89,8 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: CommandP
   const { openCreate } = useSnippetEditor()
   const collectionEditor = useCollectionEditor()
   const { setTheme } = useTheme()
+  const backup = useBackup()
+  const { canInstall } = useInstallState()
   const [search, setSearch] = useState('')
   /** User's highlighted item, remembered per query (so a new query starts at its best match). */
   const [selection, setSelection] = useState<{ value: string; query: string }>({ value: '', query: '' })
@@ -218,8 +225,33 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: CommandP
         keywords: 'help hotkeys keys',
         run: onShowShortcuts,
       },
+      {
+        id: 'export-backup',
+        label: 'Export backup',
+        icon: Download,
+        keywords: 'save download json backup',
+        run: () => void backup.exportAll(),
+      },
+      {
+        id: 'import-backup',
+        label: 'Import backup',
+        icon: Upload,
+        keywords: 'restore load json upload',
+        run: backup.chooseImportFile,
+      },
+      ...(canInstall
+        ? [
+            {
+              id: 'install',
+              label: 'Install SnipIt app',
+              icon: MonitorDown,
+              keywords: 'pwa desktop home screen offline',
+              run: () => void promptInstall(),
+            },
+          ]
+        : []),
     ]
-  }, [navigate, openCreate, collectionEditor, setTheme, onShowShortcuts])
+  }, [navigate, openCreate, collectionEditor, setTheme, onShowShortcuts, backup, canInstall])
 
   const visibleActions = terms.length
     ? paletteActions.filter((action) => containsAll(`${action.label} ${action.keywords ?? ''}`, terms))

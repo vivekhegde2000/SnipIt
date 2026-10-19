@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { Kbd } from '@/components/Kbd'
 import { PageHeader } from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
+import { BackupReminder } from '@/features/backup/components/BackupReminder'
 import { CollectionActionsMenu } from '@/features/collections/components/CollectionActionsMenu'
 import { useLibrary } from '@/features/library/library-context'
 import { useDelayedFlag } from '@/hooks/use-delayed-flag'
@@ -161,6 +162,8 @@ export function SnippetsPage({ view: viewKind }: SnippetsPageProps) {
           </>
         }
       />
+
+      {viewKind === 'all' && <BackupReminder />}
 
       <SnippetToolbar
         view={view}

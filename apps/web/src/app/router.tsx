@@ -1,6 +1,5 @@
 import { createBrowserRouter } from 'react-router'
 import { CollectionsPage } from '@/features/collections/pages/CollectionsPage'
-import { SettingsPage } from '@/features/settings/pages/SettingsPage'
 import { SnippetsPage } from '@/features/snippets/pages/SnippetsPage'
 import { AppLayout } from './layout/AppLayout'
 import { NotFoundPage } from './pages/NotFoundPage'
@@ -16,7 +15,13 @@ export const router = createBrowserRouter([
       { path: 'recent', element: <SnippetsPage view="recent" /> },
       { path: 'collections', element: <CollectionsPage /> },
       { path: 'collections/:collectionId', element: <SnippetsPage view="collection" /> },
-      { path: 'settings', element: <SettingsPage /> },
+      {
+        path: 'settings',
+        // Rarely visited: kept out of the startup bundle (precached by the service worker, so it
+        // still opens instantly and offline).
+        lazy: () =>
+          import('@/features/settings/pages/SettingsPage').then((m) => ({ Component: m.SettingsPage })),
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

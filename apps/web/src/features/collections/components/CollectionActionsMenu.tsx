@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react'
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Download, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { Collection } from '@snipit/shared'
 import { Button } from '@/components/ui/button'
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useBackup } from '@/features/backup/backup-context'
 import { cn } from '@/lib/utils'
 import { useCollectionEditor } from '../editor/collection-editor-context'
 
@@ -19,7 +20,7 @@ type CollectionActionsMenuProps = {
   align?: 'start' | 'end'
 }
 
-/** "⋯" menu for a collection: edit (rename / colour / icon) and delete. */
+/** "⋯" menu for a collection: edit (rename / colour / icon), export and delete. */
 export function CollectionActionsMenu({
   collection,
   triggerClassName,
@@ -27,6 +28,7 @@ export function CollectionActionsMenu({
   align = 'end',
 }: CollectionActionsMenuProps) {
   const { edit, remove } = useCollectionEditor()
+  const { exportCollection } = useBackup()
 
   return (
     <DropdownMenu>
@@ -46,6 +48,10 @@ export function CollectionActionsMenu({
         <DropdownMenuItem onSelect={() => edit(collection.id)}>
           <Pencil aria-hidden="true" />
           Edit collection
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void exportCollection(collection)}>
+          <Download aria-hidden="true" />
+          Export collection
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onSelect={() => remove(collection)}>

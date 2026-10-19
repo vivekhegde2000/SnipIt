@@ -85,9 +85,9 @@ export function SnippetToolbar({
 
   return (
     <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 space-y-3 border-b bg-background/90 px-4 py-3 backdrop-blur-md supports-backdrop-filter:bg-background/75 sm:-mx-6 sm:px-6 md:top-0 md:-mx-8 md:px-8 2xl:-mx-12 2xl:px-12">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center">
+      <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
         {/* Search */}
-        <div className="relative min-w-0 md:max-w-md md:flex-1 xl:max-w-xl">
+        <div className="relative min-w-0 md:max-w-xl xl:max-w-md xl:min-w-64 xl:flex-1 2xl:max-w-xl">
           <Search
             className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
@@ -201,7 +201,7 @@ export function SnippetToolbar({
 
           {view.kind !== 'recent' && (
             <Select value={sort} onValueChange={(value) => onQueryChange({ sort: value as SortKey })}>
-              <SelectTrigger aria-label="Sort snippets" className="shrink-0 md:ml-auto">
+              <SelectTrigger aria-label="Sort snippets" className="shrink-0 xl:ml-auto">
                 <ArrowDownUp className="text-muted-foreground" aria-hidden="true" />
                 <SelectValue />
               </SelectTrigger>

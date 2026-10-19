@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useDelayedFlag } from '@/hooks/use-delayed-flag'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { useLibrary } from '@/features/library/library-context'
+import { useEntranceAnimation } from '@/lib/initial-screen'
 import { LIFT_ON_HOVER, TILE_GRID } from '@/lib/layout'
 import { STAGGER_LIMIT, STAGGER_STEP, TRANSITION } from '@/lib/motion'
 import { cn } from '@/lib/utils'
@@ -19,6 +20,7 @@ export function CollectionsPage() {
   const { collections, counts, isLoading } = useLibrary()
   const { create } = useCollectionEditor()
   const showSkeleton = useDelayedFlag(isLoading)
+  const enter = useEntranceAnimation()
   useDocumentTitle('Collections')
 
   if (isLoading) {
@@ -64,7 +66,7 @@ export function CollectionsPage() {
               <m.li
                 key={collection.id}
                 layout="position"
-                initial={{ opacity: 0, y: 10 }}
+                initial={enter ? { opacity: 0, y: 10 } : false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
                   ...TRANSITION.base,

@@ -12,6 +12,11 @@ type CopyButtonProps = Omit<ComponentProps<typeof Button>, 'onClick' | 'children
   onCopy: () => Promise<boolean>
   label?: string
   copiedLabel?: string
+  /**
+   * Fuller accessible name, e.g. "Copy Undo last commit" for a card's button. Must contain the
+   * visible label (WCAG 2.5.3, so voice control "click Copy" still works).
+   */
+  accessibleLabel?: string
   /** Icon only (label becomes the accessible name). */
   iconOnly?: boolean
 }
@@ -24,6 +29,7 @@ export function CopyButton({
   onCopy,
   label = 'Copy',
   copiedLabel = 'Copied',
+  accessibleLabel,
   iconOnly = false,
   className,
   variant = 'default',
@@ -47,7 +53,8 @@ export function CopyButton({
       type="button"
       variant={variant}
       data-copied={copied}
-      aria-label={iconOnly ? (copied ? copiedLabel : label) : undefined}
+      // Explicit name: stays correct while the icon animates and when a modal hides the page.
+      aria-label={copied ? copiedLabel : (accessibleLabel ?? label)}
       onClick={handleClick}
       className={cn(
         'relative overflow-hidden',

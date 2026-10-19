@@ -16,7 +16,10 @@ import { LanguageSelect } from '@/features/snippets/editor/LanguageSelect'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { TRANSITION } from '@/lib/motion'
 import { cn } from '@/lib/utils'
+import { BackupSection } from '@/features/backup/components/BackupSection'
+import { InstallAppSection } from '@/features/pwa/InstallAppSection'
 import { DeleteAllDataDialog } from '../components/DeleteAllDataDialog'
+import { StorageSection } from '../components/StorageSection'
 import { useSettings } from '../use-settings'
 
 type SettingsSectionProps = {
@@ -107,6 +110,24 @@ export function SettingsPage() {
               onChange={updateDefaultLanguage}
             />
           </div>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Backup & restore"
+          description="Export your library to a file, or import one — from another device or an older backup."
+        >
+          <BackupSection />
+        </SettingsSection>
+
+        <SettingsSection
+          title="Storage"
+          description="Your snippets are saved in this browser, on this device."
+        >
+          <StorageSection />
+        </SettingsSection>
+
+        <SettingsSection title="Install app" description="Use SnipIt like a native app, online or offline.">
+          <InstallAppSection />
         </SettingsSection>
 
         <SettingsSection

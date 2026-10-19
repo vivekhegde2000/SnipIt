@@ -1,6 +1,7 @@
 import { RouterProvider } from 'react-router/dom'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { PwaUpdater } from '@/features/pwa/PwaUpdater'
 import { MotionProvider } from './motion/MotionProvider'
 import { router } from './router'
 import { ThemeProvider } from './theme/ThemeProvider'
@@ -21,6 +22,7 @@ export function App() {
               bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 0.75rem)',
             }}
           />
+          <PwaUpdater />
         </TooltipProvider>
       </MotionProvider>
     </ThemeProvider>

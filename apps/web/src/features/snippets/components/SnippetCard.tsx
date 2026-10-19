@@ -58,7 +58,7 @@ export const SnippetCard = memo(function SnippetCard({
       )}
     >
       <header className="flex items-start gap-1">
-        <h3 className="min-w-0 flex-1 pt-0.5 text-[15px] leading-snug font-semibold">
+        <h2 className="min-w-0 flex-1 pt-0.5 text-[15px] leading-snug font-semibold">
           <button
             type="button"
             data-card-primary
@@ -69,7 +69,7 @@ export const SnippetCard = memo(function SnippetCard({
           >
             <HighlightText text={snippet.title} ranges={titleMatches} />
           </button>
-        </h3>
+        </h2>
         <FavoriteButton
           isFavorite={snippet.isFavorite}
           onToggle={() => void actions.toggleFavorite(snippet)}
@@ -134,7 +134,12 @@ export const SnippetCard = memo(function SnippetCard({
         </p>
         <div className="relative z-10 flex shrink-0 items-center gap-1">
           <SnippetActionsMenu snippet={snippet} actions={actions} />
-          <CopyButton size="sm" onCopy={() => actions.copy(snippet)} aria-keyshortcuts="C" />
+          <CopyButton
+            size="sm"
+            onCopy={() => actions.copy(snippet)}
+            accessibleLabel={`Copy ${snippet.title}`}
+            aria-keyshortcuts="C"
+          />
         </div>
       </footer>
     </article>
