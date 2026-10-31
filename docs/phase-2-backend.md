@@ -39,7 +39,7 @@ These are possible later additions.
 ```
 
 **Key idea: same origin through the Netlify proxy.** The browser only ever talks to
-`https://snipit.netlify.app`; Netlify forwards `/api/*` to Render. This means:
+`https://simply-snipit.netlify.app`; Netlify forwards `/api/*` to Render. This means:
 - **no CORS setup** in production,
 - the auth cookie is **first-party** (`SameSite=Lax`), so it isn't blocked by third-party-cookie protections in Safari, Chrome or Firefox,
 - the frontend just calls `fetch('/api/...')`.

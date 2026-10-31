@@ -431,6 +431,10 @@ instantly, even offline.
 Steps: push to GitHub → Netlify "Add new site → Import an existing project" → select repo → deploy.
 Each PR gets an automatic **deploy preview** URL.
 
+**Live:** [simply-snipit.netlify.app](https://simply-snipit.netlify.app/), deployed from `main` of
+`vivekhegde2000/SnipIt` with the settings above; every push to `main` redeploys. Roll back from
+Netlify → **Deploys** → pick an older deploy → **Publish deploy**.
+
 > If you ever switch to GitHub Pages: set `base: '/SnipIt/'` in `vite.config.ts`, use a matching PWA
 > `scope`/`start_url`, and handle SPA routing (HashRouter or a `404.html` copy).
 
@@ -503,7 +507,7 @@ navigation 24–32 ms. Dev mode was 520–650 ms for the first open before the f
 - **Toasts** moved to bottom-left on desktop so they never cover the detail panel's buttons.
 - `react-hotkeys-hook` and `prism-react-renderer` from the plan were not needed (see the tech-stack table).
 
-### Day 3 — Polish and ship ✅ (deploy pending)
+### Day 3 — Polish and ship ✅
 - [x] Export / Import (preview, merge/replace, error handling) in Settings, plus the command palette,
       collection menu (export one collection), welcome screen and drag & drop anywhere
 - [x] PWA: manifest (with app shortcuts), generated icons, offline precache, update prompt, install card
@@ -512,8 +516,11 @@ navigation 24–32 ms. Dev mode was 520–650 ms for the first open before the f
 - [x] Accessibility pass (keyboard only, screen reader labels, contrast) in both themes: axe reports 0 violations
 - [x] Responsive QA at 360, 768, 1024 and 1440 px: no horizontal overflow anywhere
 - [ ] ~~Unit and component tests for logic-heavy code~~ (skipped at the project owner's request)
-- [x] `netlify.toml` and Lighthouse check. **First deploy: to be done by the project owner.**
-- [x] Root README: screenshots, features, shortcuts, tech stack, deploy steps (live link to add after deploy)
+- [x] `netlify.toml` and Lighthouse check
+- [x] First deploy (by the project owner, 2026-10-31): **live at
+      [simply-snipit.netlify.app](https://simply-snipit.netlify.app/)**. Confirmed on the live site:
+      deep links load (SPA fallback), the CSP and security headers are sent, and the manifest is served.
+- [x] Root README: screenshots, features, shortcuts, tech stack, deploy steps, live link
 
 **Implementation notes (Day 3)**
 - **Backup format:** `{ app: "snipit", version: 1, exportedAt, collections, snippets }`. Only active
@@ -569,3 +576,13 @@ navigation 24–32 ms. Dev mode was 520–650 ms for the first open before the f
 ### Phase 1 definition of done
 The app is deployed on Netlify, is installable, works offline, every MVP feature (F1–F12) works on mobile
 and desktop in both themes, tests pass, lint is clean and Lighthouse is ≥ 95.
+
+**Status (2026-10-31):**
+- Met: deployed, installable, works offline, F1–F12 on mobile and desktop in both themes, and
+  type-check, lint and formatting are clean.
+- Not met:
+  - **Tests:** none, because they were skipped at the project owner's request.
+  - **Lighthouse:** mobile Performance is 76–78 (desktop is 98).
+  - **Initial JS:** ~315 KB gzip, against the ~200 KB target.
+
+  See §10 for why mobile Performance is below target and what could still be done.

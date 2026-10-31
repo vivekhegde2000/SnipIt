@@ -2,6 +2,8 @@
 
 > A fast, beautiful, local-first PWA for saving, searching and one-click copying reusable text:
 > shell commands, SQL queries, code, email templates and canned messages.
+>
+> **Live:** [simply-snipit.netlify.app](https://simply-snipit.netlify.app/)
 
 | Document | What's inside |
 |---|---|
@@ -88,7 +90,7 @@ Only free, open-source libraries are used (MIT / Apache-2.0 / ISC / OFL licences
 ```
 SnipIt/
 ├─ apps/
-│  ├─ web/                 # React PWA (Phase 1, complete)
+│  ├─ web/                 # React PWA (Phase 1, complete and deployed)
 │  └─ api/                 # Express + Prisma API (Phase 2)
 ├─ packages/
 │  └─ shared/              # zod schemas + TS types shared by web and api
@@ -105,7 +107,7 @@ SnipIt/
 
 | Phase | Scope | Estimate | Output |
 |---|---|---|---|
-| **1. Local-first PWA** | Full app in the browser (IndexedDB), offline, installable | ~3 days | Live on Netlify |
+| **1. Local-first PWA** ✅ | Full app in the browser (IndexedDB), offline, installable | ~3 days | Live on Netlify: [simply-snipit.netlify.app](https://simply-snipit.netlify.app/) |
 | **1.5. Stretch features** | Template variables, trash, bulk actions, share-by-URL | 1–3 days (optional) | Extra polish |
 | **2. Backend + sync** | Accounts, REST API, PostgreSQL, multi-device sync | ~4–6 days | API on Render, DB on Neon |
 

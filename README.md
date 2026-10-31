@@ -4,7 +4,7 @@ A fast, local-first snippet manager for the text you reuse every day: shell comm
 queries, code, email templates and canned messages. Find anything in a couple of keystrokes and
 copy it with one click. It works offline, installs like an app and keeps your data in your browser.
 
-**Live app:** _coming soon — `https://<your-site>.netlify.app`_
+**Live app:** [simply-snipit.netlify.app](https://simply-snipit.netlify.app/)
 
 ![SnipIt on desktop, light theme](docs/screenshots/desktop-light.png)
 
@@ -141,7 +141,8 @@ failing the whole import.
 
 ## Roadmap
 
-- **Phase 1, the local-first PWA:** done (Days 1–3). See [docs/phase-1-frontend.md](docs/phase-1-frontend.md).
+- **Phase 1, the local-first PWA:** done (Days 1–3) and live on Netlify. See
+  [docs/phase-1-frontend.md](docs/phase-1-frontend.md).
 - **Phase 2, accounts and multi-device sync:** Node.js, Express, Prisma and PostgreSQL. See
   [docs/phase-2-backend.md](docs/phase-2-backend.md).
 
