@@ -1,5 +1,6 @@
 import type { ComponentProps } from 'react'
 import {
+  Braces,
   Copy,
   CopyPlus,
   Download,
@@ -9,10 +10,11 @@ import {
   PanelRightOpen,
   Pencil,
   Plus,
+  Share2,
   Star,
   Trash2,
 } from 'lucide-react'
-import type { Snippet } from '@snipit/shared'
+import { hasTemplateVariables, type Snippet } from '@snipit/shared'
 import { ColorDot } from '@/components/ColorDot'
 import { Button } from '@/components/ui/button'
 import {
@@ -30,6 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useCollectionEditor } from '@/features/collections/editor/collection-editor-context'
 import { useLibrary } from '@/features/library/library-context'
+import { preloadShareCodec } from '@/features/share/share-link'
 import { cn } from '@/lib/utils'
 import type { SnippetActions } from './use-snippet-actions'
 
@@ -95,8 +98,10 @@ export function SnippetActionsMenu({
   triggerSize = 'icon-sm',
   triggerClassName,
 }: SnippetActionsMenuProps) {
+  const isTemplate = hasTemplateVariables(snippet.content)
   return (
-    <DropdownMenu>
+    // Opening the menu warms the share-link codec, so "Share link" completes within the click.
+    <DropdownMenu onOpenChange={(open) => open && preloadShareCodec()}>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
@@ -123,10 +128,16 @@ export function SnippetActionsMenu({
           <DropdownMenuShortcut>E</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void actions.copy(snippet)}>
-          <Copy aria-hidden="true" />
-          Copy content
+          {isTemplate ? <Braces aria-hidden="true" /> : <Copy aria-hidden="true" />}
+          {isTemplate ? 'Fill in & copy' : 'Copy content'}
           <DropdownMenuShortcut>C</DropdownMenuShortcut>
         </DropdownMenuItem>
+        {isTemplate && (
+          <DropdownMenuItem onSelect={() => void actions.copyAsIs(snippet)}>
+            <Copy aria-hidden="true" />
+            Copy as-is
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onSelect={() => void actions.toggleFavorite(snippet)}>
           <Star aria-hidden="true" className={cn(snippet.isFavorite && 'fill-favorite text-favorite')} />
           {snippet.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
@@ -148,6 +159,10 @@ export function SnippetActionsMenu({
           </DropdownMenuSubContent>
         </DropdownMenuSub>
 
+        <DropdownMenuItem onSelect={() => void actions.share(snippet)}>
+          <Share2 aria-hidden="true" />
+          Share link
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => actions.download(snippet)}>
           <Download aria-hidden="true" />
           Download as file

@@ -1,7 +1,9 @@
+import { Link } from 'react-router'
 import { m } from 'motion/react'
 import { Code2, Plus, ShieldCheck, Tags, Upload, type LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useBackup } from '@/features/backup/backup-context'
+import { useLibrary } from '@/features/library/library-context'
 import { useEntranceAnimation } from '@/lib/initial-screen'
 import { STAGGER_STEP, TRANSITION } from '@/lib/motion'
 import type { NewSnippetTrigger } from '../use-new-snippet'
@@ -83,6 +85,7 @@ function WelcomeIllustration() {
 /** First-run screen: what SnipIt is for, and one clear action. */
 export function LibraryWelcome({ trigger }: { trigger: NewSnippetTrigger }) {
   const { chooseImportFile } = useBackup()
+  const trashCount = useLibrary().counts.trash
   const enter = useEntranceAnimation()
   return (
     <m.section
@@ -128,6 +131,18 @@ export function LibraryWelcome({ trigger }: { trigger: NewSnippetTrigger }) {
           Import a backup
         </Button>
       </div>
+      {trashCount > 0 && (
+        <p className="relative mt-4 text-sm text-muted-foreground">
+          {trashCount === 1 ? '1 deleted snippet is' : `${trashCount} deleted snippets are`} in the{' '}
+          <Link
+            to="/trash"
+            className="rounded font-medium text-primary underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            Trash
+          </Link>
+          .
+        </p>
+      )}
 
       <ul className="relative mx-auto mt-12 grid max-w-4xl gap-4 text-left sm:grid-cols-3">
         {HIGHLIGHTS.map(({ icon: Icon, title, text }, index) => (

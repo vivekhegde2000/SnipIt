@@ -1,17 +1,19 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { m } from 'motion/react'
-import { Loader2, Star, X } from 'lucide-react'
+import { Braces, Loader2, Star, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DEFAULT_LANGUAGE,
   LIMITS,
+  parseTemplateVariables,
   snippetInputSchema,
   type LanguageId,
   type Snippet,
   type SnippetFormValues,
   type SnippetInput,
+  type TemplateVariable,
 } from '@snipit/shared'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { FormField } from '@/components/FormField'
@@ -64,6 +66,36 @@ const IDS = {
 function valuesFromSnippet(snippet: Snippet): SnippetFormValues {
   const { title, content, description, language, tags, collectionId, isFavorite } = snippet
   return { title, content, description, language, tags, collectionId, isFavorite }
+}
+
+/** Variables listed in the hint before "+N more". */
+const HINT_VARIABLE_LIMIT = 6
+
+/** Under the content: the detected `{{variables}}`, or how to add one. */
+function TemplateHint({ variables }: { variables: readonly TemplateVariable[] }) {
+  if (variables.length === 0) {
+    return (
+      <>
+        Tip: type <code className="font-mono text-foreground">{'{{name}}'}</code> to add a field you fill in
+        when copying.
+      </>
+    )
+  }
+  const shown = variables.slice(0, HINT_VARIABLE_LIMIT)
+  const more = variables.length - shown.length
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+      <Braces className="size-3.5 text-primary" aria-hidden="true" />
+      <span>Template — you'll fill in</span>
+      {shown.map((variable) => (
+        <code key={variable.name} className="rounded bg-muted px-1 font-mono text-foreground">
+          {variable.name}
+        </code>
+      ))}
+      {more > 0 && <span>+{more} more</span>}
+      <span>when copying.</span>
+    </span>
+  )
 }
 
 /** Accessible favorite switch with a small "pop" when it turns on. */
@@ -128,6 +160,8 @@ export function SnippetEditorDialog({ request, open, onClose, defaultLanguage }:
   })
 
   const language = useWatch({ control, name: 'language' })
+  const content = useWatch({ control, name: 'content' })
+  const templateVariables = useMemo(() => parseTemplateVariables(content), [content])
   const editorRef = useRef<CodeEditorHandle | null>(null)
   const [confirmDiscard, setConfirmDiscard] = useState(false)
 
@@ -150,11 +184,13 @@ export function SnippetEditorDialog({ request, open, onClose, defaultLanguage }:
       if (request.mode === 'edit') {
         await snippetRepository.update(request.snippetId, values)
         toast.success('Changes saved')
+        onClose()
       } else {
-        await snippetRepository.create(values)
+        const created = await snippetRepository.create(values)
         toast.success('Snippet created')
+        onClose()
+        request.onCreated?.(created)
       }
-      onClose()
     } catch (error) {
       toast.error(getErrorMessage(error))
     }
@@ -265,7 +301,8 @@ export function SnippetEditorDialog({ request, open, onClose, defaultLanguage }:
                       label="Content"
                       error={fieldState.error?.message}
                       onLabelClick={() => editorRef.current?.focus()}
-                      className="lg:min-h-0 lg:flex-1 lg:grid-rows-[auto_minmax(0,1fr)]"
+                      hint={<TemplateHint variables={templateVariables} />}
+                      className="lg:min-h-0 lg:flex-1 lg:grid-rows-[auto_minmax(0,1fr)_auto]"
                       labelAside={
                         <span className="text-xs text-muted-foreground tabular-nums">
                           {field.value.length.toLocaleString()} chars
@@ -292,7 +329,7 @@ export function SnippetEditorDialog({ request, open, onClose, defaultLanguage }:
                           language={language}
                           placeholder="Paste or type your snippet…"
                           ariaLabel="Snippet content"
-                          ariaDescribedBy={describedBy(IDS.content, { error: fieldState.error })}
+                          ariaDescribedBy={describedBy(IDS.content, { hint: true, error: fieldState.error })}
                           invalid={!!fieldState.error}
                         />
                       </div>

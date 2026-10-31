@@ -1,11 +1,13 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router'
-import { Hash, Pencil, Trash2, X } from 'lucide-react'
-import { getLanguageLabel, type Collection, type Snippet } from '@snipit/shared'
+import { Braces, Hash, Pencil, Share2, Trash2, X } from 'lucide-react'
+import { getLanguageLabel, parseTemplateVariables, type Collection, type Snippet } from '@snipit/shared'
 import { ColorDot } from '@/components/ColorDot'
 import { CopyButton } from '@/components/CopyButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
+import { preloadShareCodec } from '@/features/share/share-link'
 import { tagFilterHref } from '@/features/snippets/lib/select-snippets'
 import { formatDateTime, formatRelativeTime } from '@/lib/dates'
 import { SnippetActionsMenu } from '../actions/SnippetActionsMenu'
@@ -35,6 +37,7 @@ function Stat({ label, value, title }: { label: string; value: string; title?: s
 export function SnippetDetailSheet({ snippet, collection, open, onClose }: SnippetDetailSheetProps) {
   const actions = useSnippetActions()
   const lineCount = snippet.content.split('\n').length
+  const variables = useMemo(() => parseTemplateVariables(snippet.content), [snippet.content])
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
@@ -67,6 +70,18 @@ export function SnippetDetailSheet({ snippet, collection, open, onClose }: Snipp
                 isFavorite={snippet.isFavorite}
                 onToggle={() => void actions.toggleFavorite(snippet)}
               />
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Share link"
+                title="Share link"
+                onPointerEnter={preloadShareCodec}
+                onFocus={preloadShareCodec}
+                onClick={() => void actions.share(snippet)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Share2 aria-hidden="true" />
+              </Button>
               <SnippetActionsMenu snippet={snippet} actions={actions} showOpen={false} triggerSize="icon" />
               <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}>
                 <X aria-hidden="true" />
@@ -97,6 +112,41 @@ export function SnippetDetailSheet({ snippet, collection, open, onClose }: Snipp
             </div>
             <CodeBlock code={snippet.content} language={snippet.language} className="p-4 text-[13px]" />
           </section>
+
+          {variables.length > 0 && (
+            <section
+              aria-labelledby="detail-template"
+              className="flex gap-3 rounded-xl border border-primary/25 bg-accent/50 p-3.5"
+            >
+              <Braces className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+              <div className="min-w-0 text-sm">
+                <h3 id="detail-template" className="font-medium">
+                  Template with {variables.length} field{variables.length === 1 ? '' : 's'}
+                </h3>
+                <p className="mt-1 flex flex-wrap gap-1.5">
+                  {variables.map((variable) => (
+                    <code
+                      key={variable.name}
+                      className="rounded bg-background px-1.5 py-0.5 font-mono text-xs"
+                      title={variable.defaultValue ? `Default: ${variable.defaultValue}` : undefined}
+                    >
+                      {variable.name}
+                    </code>
+                  ))}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Copying asks for these values first.{' '}
+                  <button
+                    type="button"
+                    onClick={() => void actions.copyAsIs(snippet)}
+                    className="rounded font-medium text-primary underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >
+                    Copy as-is
+                  </button>
+                </p>
+              </div>
+            </section>
+          )}
 
           {snippet.tags.length > 0 && (
             <section aria-labelledby="detail-tags">
@@ -164,7 +214,11 @@ export function SnippetDetailSheet({ snippet, collection, open, onClose }: Snipp
             <Pencil aria-hidden="true" />
             Edit
           </Button>
-          <CopyButton onCopy={() => actions.copy(snippet)} label="Copy snippet" className="px-5" />
+          <CopyButton
+            onCopy={() => actions.copy(snippet)}
+            label={variables.length > 0 ? 'Fill in & copy' : 'Copy snippet'}
+            className="px-5"
+          />
         </div>
       </SheetContent>
     </Sheet>

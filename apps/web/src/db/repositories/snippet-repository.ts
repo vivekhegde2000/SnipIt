@@ -36,10 +36,9 @@ async function assertCollectionUsable(collectionId: string | null): Promise<void
  * schema, so nothing malformed can reach IndexedDB regardless of the caller.
  */
 export const snippetRepository = {
-  /** Active (not deleted) snippets, most recently updated first. */
-  async listActive(): Promise<Snippet[]> {
-    const all = await db.snippets.orderBy('updatedAt').reverse().toArray()
-    return all.filter((s) => s.deletedAt === null)
+  /** Every snippet, including those in the Trash, most recently updated first. */
+  async listAll(): Promise<Snippet[]> {
+    return db.snippets.orderBy('updatedAt').reverse().toArray()
   },
 
   async create(values: SnippetFormValues): Promise<Snippet> {
@@ -99,12 +98,37 @@ export const snippetRepository = {
     })
   },
 
-  async restore(id: string): Promise<void> {
-    await db.transaction('rw', db.snippets, async () => {
+  /**
+   * Brings a snippet back from the Trash. If its collection was deleted in the meantime, the
+   * snippet comes back unsorted rather than pointing at a collection that no longer exists.
+   */
+  async restore(id: string): Promise<Snippet> {
+    return db.transaction('rw', db.snippets, db.collections, async () => {
       const existing = await db.snippets.get(id)
       if (!existing) throw new RepositoryError('NOT_FOUND', 'This snippet no longer exists.')
-      await db.snippets.put({ ...existing, deletedAt: null, updatedAt: Date.now() })
+      const collection = existing.collectionId ? await db.collections.get(existing.collectionId) : undefined
+      const collectionId = collection && collection.deletedAt === null ? collection.id : null
+      const restored: Snippet = { ...existing, collectionId, deletedAt: null, updatedAt: Date.now() }
+      await db.snippets.put(restored)
+      return restored
     })
+  },
+
+  /** Permanently removes a snippet that is in the Trash. Active snippets are never hard-deleted. */
+  async deleteForever(id: string): Promise<void> {
+    await db.transaction('rw', db.snippets, async () => {
+      const existing = await db.snippets.get(id)
+      if (!existing) return
+      if (existing.deletedAt === null) {
+        throw new RepositoryError('CONFLICT', 'This snippet was restored and is no longer in the Trash.')
+      }
+      await db.snippets.delete(id)
+    })
+  },
+
+  /** Permanently removes everything in the Trash. Returns how many snippets were removed. */
+  async emptyTrash(): Promise<number> {
+    return db.snippets.filter((snippet) => snippet.deletedAt !== null).delete()
   },
 
   /**

@@ -1,4 +1,4 @@
-import { Clock, FolderOpen, Layers, Settings, Star, type LucideIcon } from 'lucide-react'
+import { Clock, FolderOpen, Layers, Settings, Star, Trash2, type LucideIcon } from 'lucide-react'
 import type { LibraryCounts } from '@/features/library/library-context'
 
 export type NavItemConfig = {
@@ -14,6 +14,7 @@ export const LIBRARY_NAV: readonly NavItemConfig[] = [
   { to: '/', label: 'All snippets', icon: Layers, end: true, count: (c) => c.all },
   { to: '/favorites', label: 'Favorites', icon: Star, count: (c) => c.favorites },
   { to: '/recent', label: 'Recent', icon: Clock },
+  { to: '/trash', label: 'Trash', icon: Trash2, count: (c) => c.trash },
 ]
 
 export const SETTINGS_NAV: NavItemConfig = { to: '/settings', label: 'Settings', icon: Settings }

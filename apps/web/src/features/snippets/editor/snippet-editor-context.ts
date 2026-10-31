@@ -1,12 +1,18 @@
 import { createContext, useContext } from 'react'
-import type { SnippetFormValues } from '@snipit/shared'
+import type { Snippet, SnippetFormValues } from '@snipit/shared'
+
+export type CreateOptions = {
+  /** Called after the new snippet is saved (and the editor has closed). */
+  onCreated?: (snippet: Snippet) => void
+}
 
 export type SnippetEditorRequest =
-  { mode: 'create'; defaults?: Partial<SnippetFormValues> } | { mode: 'edit'; snippetId: string }
+  | ({ mode: 'create'; defaults?: Partial<SnippetFormValues> } & CreateOptions)
+  | { mode: 'edit'; snippetId: string }
 
 export type SnippetEditorApi = {
   /** Opens the editor for a new snippet, optionally pre-filled (e.g. current collection). */
-  openCreate: (defaults?: Partial<SnippetFormValues>) => void
+  openCreate: (defaults?: Partial<SnippetFormValues>, options?: CreateOptions) => void
   openEdit: (snippetId: string) => void
   /** Warm the editor on user intent (hover / focus of a trigger). Safe to call repeatedly. */
   preload: () => void

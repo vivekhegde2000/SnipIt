@@ -15,6 +15,15 @@ export const router = createBrowserRouter([
       { path: 'recent', element: <SnippetsPage view="recent" /> },
       { path: 'collections', element: <CollectionsPage /> },
       { path: 'collections/:collectionId', element: <SnippetsPage view="collection" /> },
+      // Trash and shared links are occasional destinations: lazy chunks, precached for offline use.
+      {
+        path: 'trash',
+        lazy: () => import('@/features/trash/TrashPage').then((m) => ({ Component: m.TrashPage })),
+      },
+      {
+        path: 'share',
+        lazy: () => import('@/features/share/SharePage').then((m) => ({ Component: m.SharePage })),
+      },
       {
         path: 'settings',
         // Rarely visited: kept out of the startup bundle (precached by the service worker, so it

@@ -17,10 +17,11 @@ import {
   Settings,
   Star,
   Sun,
+  Trash2,
   Upload,
   type LucideIcon,
 } from 'lucide-react'
-import { getLanguageLabel, type Snippet } from '@snipit/shared'
+import { getLanguageLabel, hasTemplateVariables, type Snippet } from '@snipit/shared'
 import { ColorDot } from '@/components/ColorDot'
 import { HighlightText } from '@/components/HighlightText'
 import { Kbd } from '@/components/Kbd'
@@ -189,6 +190,14 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: CommandP
         run: go('/collections'),
       },
       {
+        id: 'go-trash',
+        label: 'Go to Trash',
+        icon: Trash2,
+        keys: [['G'], ['T']],
+        keywords: 'deleted bin restore recycle',
+        run: go('/trash'),
+      },
+      {
         id: 'go-settings',
         label: 'Open Settings',
         icon: Settings,
@@ -296,11 +305,14 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: CommandP
         {snippetResults.map(({ snippet, titleMatches }) => {
           const collection = snippet.collectionId ? collectionsById.get(snippet.collectionId) : undefined
           const subtitle = snippet.description || snippet.content.split('\n', 1)[0]
+          const isTemplate = hasTemplateVariables(snippet.content)
           return (
             <Command.Item
               key={snippet.id}
               value={`snippet:${snippet.id}`}
               onSelect={async () => {
+                // A template continues in its fill-in form, which replaces the palette.
+                if (isTemplate) return runAndClose(() => void actions.copy(snippet))
                 // Copy first (keeps the user-activation window for the clipboard), then close.
                 if (await actions.copy(snippet)) close()
               }}
@@ -339,7 +351,7 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: CommandP
               </span>
               {/* Keyboard hint — meaningless on touch screens, so hidden there. */}
               <span className="hidden shrink-0 items-center gap-1 text-[11px] text-muted-foreground group-data-[selected=true]:flex pointer-coarse:group-data-[selected=true]:hidden">
-                <Kbd keys={['↵']} /> Copy
+                <Kbd keys={['↵']} /> {isTemplate ? 'Fill in' : 'Copy'}
               </span>
             </Command.Item>
           )

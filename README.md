@@ -29,7 +29,12 @@ copy it with one click. It works offline, installs like an app and keeps your da
   tag, collection and favorites, and sorting. The filters live in the URL, so views can be bookmarked.
 - **Command palette** (`Ctrl K` / `⌘ K`) to search, copy and run any action, and **keyboard
   shortcuts** for everything.
-- **Collections** with colours and icons, **Favorites** and **Recent** views.
+- **Templates:** write `Hi {{name}}, order {{orderId}}` and SnipIt asks for the values when you
+  copy, with a live preview. Defaults (`{{name=there}}`) and remembered values make repeats quick.
+- **Share by link:** the snippet is compressed into the link itself, so nothing is uploaded.
+  The recipient can copy it or save it to their own library.
+- **Collections** with colours and icons, **Favorites** and **Recent** views, and a **Trash**
+  that keeps deleted snippets restorable for 30 days.
 - **Backup and restore:** export the whole library or one collection as JSON. Importing previews
   the changes first and either merges (newest edit wins) or replaces. Files can be dropped
   anywhere on the page.
@@ -49,7 +54,7 @@ Press `?` in the app for the full list.
 | Command palette             | `Ctrl K` / `⌘ K`               |
 | Search snippets             | `/`                            |
 | New snippet                 | `N`                            |
-| Go to All / Favorites / Recent / Collections / Settings | `G` then `A` / `F` / `R` / `C` / `S` |
+| Go to All / Favorites / Recent / Collections / Trash / Settings | `G` then `A` / `F` / `R` / `C` / `T` / `S` |
 | Next / previous snippet     | `J` / `K`, or the arrow keys   |
 | Focused snippet: open, copy, edit | `Enter` or `O`, `C`, `E` |
 | Focused snippet: favorite, duplicate, delete | `F`, `D`, `Del` |
@@ -68,6 +73,7 @@ All libraries are free and open source.
 | Search        | Fuse.js                                                                   |
 | Editor        | CodeMirror 6 (lazy-loaded, grammars loaded per language)                  |
 | Forms         | react-hook-form + zod                                                     |
+| Share links   | lz-string (loaded only when sharing)                                      |
 | PWA           | vite-plugin-pwa (Workbox), `@vite-pwa/assets-generator`                   |
 | Quality       | oxlint, Prettier                                                          |
 | Hosting       | Netlify                                                                   |
@@ -143,6 +149,8 @@ failing the whole import.
 
 - **Phase 1, the local-first PWA:** done (Days 1–3) and live on Netlify. See
   [docs/phase-1-frontend.md](docs/phase-1-frontend.md).
+- **Phase 1.5, stretch features:** Trash, templates and share links are done (Day 4). Bulk
+  actions, a grid/list toggle and collection ordering come next (Day 5).
 - **Phase 2, accounts and multi-device sync:** Node.js, Express, Prisma and PostgreSQL. See
   [docs/phase-2-backend.md](docs/phase-2-backend.md).
 

@@ -68,16 +68,24 @@ export const collectionRepository = {
   },
 
   /**
-   * Soft-deletes the collection. Its snippets are kept and become unsorted.
+   * Soft-deletes the collection. Its active snippets are kept and become unsorted.
    * Returns the ids of those snippets so the deletion can be undone with {@link restore}.
+   *
+   * Snippets in the Trash keep pointing at the collection: if it is restored (Undo) they still
+   * belong to it, and if it is gone for good, restoring them from the Trash makes them unsorted.
    */
   async softDelete(id: string): Promise<{ snippetIds: string[] }> {
     return db.transaction('rw', db.collections, db.snippets, async () => {
       const existing = await getActiveOrThrow(id)
       const now = Date.now()
-      const snippetIds = (await db.snippets.where('collectionId').equals(id).primaryKeys()) as string[]
+      const active = () =>
+        db.snippets
+          .where('collectionId')
+          .equals(id)
+          .filter((snippet) => snippet.deletedAt === null)
+      const snippetIds = (await active().primaryKeys()) as string[]
       await db.collections.put({ ...existing, deletedAt: now, updatedAt: now })
-      await db.snippets.where('collectionId').equals(id).modify({ collectionId: null, updatedAt: now })
+      await active().modify({ collectionId: null, updatedAt: now })
       return { snippetIds }
     })
   },

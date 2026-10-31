@@ -216,6 +216,10 @@ Every query is **scoped by `userId`** from the session. Users can never read or 
   Every local create, update or delete sets `dirty = 1`.
 - Add a `meta` entry `lastSyncCursor` (an ISO timestamp from the server; `null` means never synced).
 - Deletes stay **soft** (`deletedAt`), so they can be synced. Tombstones older than 30 days and already synced can be purged.
+  > Phase 1.5 already purges Trash items older than `TRASH_RETENTION_DAYS` (30) on app start
+  > (`purgeExpiredTrash` in `apps/web/src/db/maintenance.ts`). With sync, that function **must
+  > skip rows that are still `dirty`**, otherwise other devices never learn about the delete. The
+  > server can purge its own tombstones on the same schedule.
 
 ### 5.2 The `/api/sync` contract
 ```ts
@@ -339,6 +343,8 @@ Scripts:
 - `apps/web/src/sync/`: `apiClient.ts` (a typed `fetch` wrapper with the error shape and 401 handling), `syncEngine.ts`, `useSyncStatus()`.
 - Dexie `version(2)` upgrade: add the `dirty` index and the `meta` table.
 - Repositories set `dirty = 1` on writes and trigger the debounced sync. **UI components don't change.**
+  This includes the Trash operations: restore, delete forever and empty trash. A hard delete of a
+  never-synced row needs no server call; an already-synced one is pushed as a tombstone first.
 - Sidebar footer: account avatar / "Sign in to sync" button + sync status indicator.
 - New routes: `/login`, `/register`, `/settings/account`.
 

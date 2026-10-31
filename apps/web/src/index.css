@@ -138,7 +138,9 @@
   --muted-foreground: oklch(0.705 0.015 286.067);
   --accent: oklch(0.257 0.09 281.288 / 60%);
   --accent-foreground: oklch(0.87 0.065 274.039);
-  --destructive: oklch(0.704 0.191 22.216);
+  /* Lighter than shadcn's default so destructive text stays ≥ 4.5:1 on its own tinted button
+     background (`destructive` button variant) in dialogs. */
+  --destructive: oklch(0.76 0.165 22.216);
   --success: oklch(0.792 0.209 151.711);
   --favorite: oklch(0.828 0.189 84.429);
   --code: oklch(0.155 0.005 285.85);

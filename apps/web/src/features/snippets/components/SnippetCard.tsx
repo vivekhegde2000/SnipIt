@@ -1,5 +1,6 @@
-import { memo } from 'react'
-import { getLanguageLabel, type Collection, type Snippet } from '@snipit/shared'
+import { memo, useMemo } from 'react'
+import { Braces } from 'lucide-react'
+import { getLanguageLabel, hasTemplateVariables, type Collection, type Snippet } from '@snipit/shared'
 import { ColorDot } from '@/components/ColorDot'
 import { CopyButton } from '@/components/CopyButton'
 import { FavoriteButton } from '@/components/FavoriteButton'
@@ -44,6 +45,7 @@ export const SnippetCard = memo(function SnippetCard({
 }: SnippetCardProps) {
   const actions = useSnippetActions()
   const preview = buildPreview(snippet.content)
+  const isTemplate = useMemo(() => hasTemplateVariables(snippet.content), [snippet.content])
   const hiddenTagCount = Math.max(0, snippet.tags.length - VISIBLE_TAGS)
 
   return (
@@ -118,6 +120,18 @@ export const SnippetCard = memo(function SnippetCard({
       <footer className="mt-auto flex items-center gap-2 pt-3">
         <p className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
           <span className="font-medium">{getLanguageLabel(snippet.language)}</span>
+          {isTemplate && (
+            <>
+              <span aria-hidden="true">·</span>
+              <span
+                className="inline-flex items-center gap-1 font-medium text-primary"
+                title="Template: you fill in its fields when copying"
+              >
+                <Braces className="size-3" aria-hidden="true" />
+                Template
+              </span>
+            </>
+          )}
           <span aria-hidden="true">·</span>
           <time
             dateTime={new Date(snippet.updatedAt).toISOString()}

@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { deleteAllData, getErrorMessage } from '@/db'
+import { forgetAllTemplateValues } from '@/features/snippets/template/template-memory'
 
 const CONFIRMATION_WORD = 'DELETE'
 
@@ -45,6 +46,7 @@ export function DeleteAllDataDialog({ snippetCount, collectionCount }: DeleteAll
     setIsDeleting(true)
     try {
       await deleteAllData()
+      forgetAllTemplateValues()
       setOpen(false)
       setConfirmation('')
       toast.success('All data deleted. You have a fresh start.')

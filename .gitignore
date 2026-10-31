@@ -28,4 +28,6 @@ Thumbs.db
 .netlify
 
 # Claude Code machine-local settings
+.claude
 .claude/settings.local.json
+.claude/settings.json

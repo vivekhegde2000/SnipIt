@@ -64,6 +64,7 @@ Only free, open-source libraries are used (MIT / Apache-2.0 / ISC / OFL licences
 | Code editor | CodeMirror 6 (`@uiw/react-codemirror`), lazy-loaded; grammars loaded per language (`@codemirror/lang-*`, `legacy-modes`) |
 | Animation | Motion (`motion/react`, MIT) with `LazyMotion` — features loaded lazily, honours reduced motion |
 | Code preview highlighting | Same CodeMirror/Lezer grammars as the editor (one highlighter, identical colours), lazy-loaded |
+| Share links | lz-string (MIT): snippet compressed into the URL fragment, lazy-loaded (Phase 1.5) |
 | Forms / validation | react-hook-form + zod |
 | Toasts | sonner |
 | Routing | React Router |
@@ -108,7 +109,7 @@ SnipIt/
 | Phase | Scope | Estimate | Output |
 |---|---|---|---|
 | **1. Local-first PWA** ✅ | Full app in the browser (IndexedDB), offline, installable | ~3 days | Live on Netlify: [simply-snipit.netlify.app](https://simply-snipit.netlify.app/) |
-| **1.5. Stretch features** | Template variables, trash, bulk actions, share-by-URL | 1–3 days (optional) | Extra polish |
+| **1.5. Stretch features** | Day 4 ✅ trash, template variables, share-by-URL · Day 5: bulk actions, grid/list, collection ordering | 2 days (optional) | Extra polish |
 | **2. Backend + sync** | Accounts, REST API, PostgreSQL, multi-device sync | ~4–6 days | API on Render, DB on Neon |
 
 Detailed task checklists are in each phase document. Tick them off (`- [x]`) as you go and commit

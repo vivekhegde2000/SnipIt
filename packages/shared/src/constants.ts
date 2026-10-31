@@ -10,6 +10,13 @@ export const LIMITS = {
   idMax: 64,
 } as const
 
+/**
+ * Deleted snippets stay in the Trash this long, then are removed for good. Deleted collections
+ * are kept for the same time (they have no Trash view; Undo covers accidental deletes).
+ */
+export const TRASH_RETENTION_DAYS = 30
+export const TRASH_RETENTION_MS = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000
+
 /** Palette keys a collection may use. Rendering maps each key to theme-aware colours. */
 export const COLLECTION_COLORS = [
   'indigo',

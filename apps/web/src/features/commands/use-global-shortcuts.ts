@@ -12,6 +12,7 @@ const GO_TO: Record<string, string> = {
   f: '/favorites',
   r: '/recent',
   c: '/collections',
+  t: '/trash',
   s: '/settings',
 }
 

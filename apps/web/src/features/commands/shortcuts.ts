@@ -31,6 +31,7 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
       { label: 'Go to Favorites', keys: [['G'], ['F']], joiner: 'then' },
       { label: 'Go to Recent', keys: [['G'], ['R']], joiner: 'then' },
       { label: 'Go to Collections', keys: [['G'], ['C']], joiner: 'then' },
+      { label: 'Go to Trash', keys: [['G'], ['T']], joiner: 'then' },
       { label: 'Go to Settings', keys: [['G'], ['S']], joiner: 'then' },
       { label: 'Next / previous snippet', keys: [['J'], ['K']], joiner: 'or' },
       { label: 'Move between cards', keys: [['←', '↑', '→', '↓']] },

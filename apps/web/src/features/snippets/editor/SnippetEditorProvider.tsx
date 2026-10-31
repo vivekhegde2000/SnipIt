@@ -6,6 +6,7 @@ import { preloadCodeEditor, preloadCodeEditorAfterPaint } from './editor-loader'
 import { SnippetEditorDialog } from './SnippetEditorDialog'
 import {
   SnippetEditorContext,
+  type CreateOptions,
   type SnippetEditorApi,
   type SnippetEditorRequest,
 } from './snippet-editor-context'
@@ -44,7 +45,8 @@ export function SnippetEditorProvider({ children }: { children: ReactNode }) {
 
   const api = useMemo<SnippetEditorApi>(
     () => ({
-      openCreate: (defaults?: Partial<SnippetFormValues>) => open({ mode: 'create', defaults }),
+      openCreate: (defaults?: Partial<SnippetFormValues>, options?: CreateOptions) =>
+        open({ mode: 'create', defaults, onCreated: options?.onCreated }),
       openEdit: (snippetId: string) => open({ mode: 'edit', snippetId }),
       preload: preloadCodeEditor,
     }),

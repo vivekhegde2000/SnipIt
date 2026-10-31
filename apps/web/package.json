@@ -42,6 +42,7 @@
     "dexie-react-hooks": "^4.4.0",
     "fuse.js": "^7.5.0",
     "lucide-react": "^1.59.0",
+    "lz-string": "^1.5.0",
     "motion": "^14.3.0",
     "radix-ui": "^1.8.1",
     "react": "^19.2.8",

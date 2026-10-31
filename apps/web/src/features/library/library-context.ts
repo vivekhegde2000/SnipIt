@@ -8,6 +8,8 @@ export type LibraryCounts = {
   favorites: number
   unsorted: number
   byCollection: ReadonlyMap<string, number>
+  /** Snippets in the Trash. */
+  trash: number
 }
 
 export type LibraryState = {
@@ -15,6 +17,8 @@ export type LibraryState = {
   isLoading: boolean
   /** Active snippets, most recently updated first. */
   snippets: readonly Snippet[]
+  /** Snippets in the Trash, most recently deleted first. */
+  trash: readonly Snippet[]
   /** Active collections in display order. */
   collections: readonly Collection[]
   collectionsById: ReadonlyMap<string, Collection>
