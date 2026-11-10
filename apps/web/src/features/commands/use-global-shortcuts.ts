@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
 import { focusSearchInput } from '@/features/snippets/search-input'
+import { toggleViewLayout } from '@/features/snippets/view-layout'
 import { focusAdjacentCard, isEditableTarget, isOverlayOpen } from '@/lib/keyboard'
 import { isModKey } from '@/lib/platform'
 
@@ -80,6 +81,10 @@ export function useGlobalShortcuts(handlers: GlobalShortcutHandlers): void {
           return
         case 'g':
           sequenceStartedAt = performance.now()
+          return
+        case 'v':
+          event.preventDefault()
+          toggleViewLayout()
           return
         case 'j':
           if (focusAdjacentCard(1)) event.preventDefault()

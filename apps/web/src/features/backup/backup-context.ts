@@ -1,11 +1,13 @@
 import { createContext, useContext } from 'react'
-import type { Collection } from '@snipit/shared'
+import type { Collection, Snippet } from '@snipit/shared'
 
 export type BackupApi = {
   /** Downloads a backup of the whole library (and records it as the last backup). */
   exportAll: () => Promise<void>
   /** Downloads one collection with its snippets. */
   exportCollection: (collection: Collection) => Promise<void>
+  /** Downloads the given snippets (and their collections) as an importable file. */
+  exportSnippets: (snippets: readonly Snippet[]) => Promise<void>
   /** Opens the file picker, then the import preview. */
   chooseImportFile: () => void
   /** Opens the import preview for a file (e.g. dropped onto the window). */

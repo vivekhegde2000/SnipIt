@@ -9,10 +9,12 @@ import {
   FolderPlus,
   Keyboard,
   Layers,
+  LayoutGrid,
   Monitor,
   MonitorDown,
   Moon,
   Plus,
+  Rows3,
   Search,
   Settings,
   Star,
@@ -34,6 +36,7 @@ import { useLibrary } from '@/features/library/library-context'
 import { useSnippetActions } from '@/features/snippets/actions/use-snippet-actions'
 import { useSnippetEditor } from '@/features/snippets/editor/snippet-editor-context'
 import { createSnippetIndex, searchSnippets, type SearchHit } from '@/features/snippets/lib/snippet-search'
+import { setViewLayout, useViewLayout } from '@/features/snippets/view-layout'
 import { isModKey } from '@/lib/platform'
 import { cn } from '@/lib/utils'
 
@@ -92,6 +95,7 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: CommandP
   const { setTheme } = useTheme()
   const backup = useBackup()
   const { canInstall } = useInstallState()
+  const layout = useViewLayout()
   const [search, setSearch] = useState('')
   /** User's highlighted item, remembered per query (so a new query starts at its best match). */
   const [selection, setSelection] = useState<{ value: string; query: string }>({ value: '', query: '' })
@@ -206,6 +210,14 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: CommandP
         run: go('/settings'),
       },
       {
+        id: 'toggle-layout',
+        label: layout === 'grid' ? 'Switch to list view' : 'Switch to grid view',
+        icon: layout === 'grid' ? Rows3 : LayoutGrid,
+        keys: [['V']],
+        keywords: 'layout compact cards rows grid list view density',
+        run: () => setViewLayout(layout === 'grid' ? 'list' : 'grid'),
+      },
+      {
         id: 'theme-light',
         label: 'Switch to light theme',
         icon: Sun,
@@ -260,7 +272,7 @@ export function CommandPalette({ open, onOpenChange, onShowShortcuts }: CommandP
           ]
         : []),
     ]
-  }, [navigate, openCreate, collectionEditor, setTheme, onShowShortcuts, backup, canInstall])
+  }, [navigate, openCreate, collectionEditor, setTheme, onShowShortcuts, backup, canInstall, layout])
 
   const visibleActions = terms.length
     ? paletteActions.filter((action) => containsAll(`${action.label} ${action.keywords ?? ''}`, terms))

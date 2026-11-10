@@ -5,6 +5,9 @@
  */
 export const SNIPPET_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))] gap-4 2xl:gap-5'
 
+/** The list layout: one compact row per snippet. Still a grid, so arrow-key navigation works. */
+export const SNIPPET_LIST = 'grid grid-cols-1 gap-2'
+
 export const TILE_GRID = 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-4 2xl:gap-5'
 
 /**

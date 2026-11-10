@@ -1,5 +1,6 @@
 import { m } from 'motion/react'
 import { Plus } from 'lucide-react'
+import { useSelectionActive } from '@/features/selection/selection-context'
 import { useNewSnippet } from '@/features/snippets/use-new-snippet'
 import { useHideOnScroll } from '@/hooks/use-hide-on-scroll'
 import { TRANSITION } from '@/lib/motion'
@@ -11,7 +12,10 @@ import { cn } from '@/lib/utils'
  */
 export function NewSnippetFab() {
   const { triggerProps } = useNewSnippet()
-  const hidden = useHideOnScroll()
+  const hiddenByScroll = useHideOnScroll()
+  // The selection bar takes this spot while selecting.
+  const selecting = useSelectionActive()
+  const hidden = hiddenByScroll || selecting
 
   return (
     <m.button

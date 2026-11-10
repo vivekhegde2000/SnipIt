@@ -120,6 +120,17 @@
   --syntax-invalid: #82071e;
 
   --bottom-nav-height: 4rem;
+
+  /*
+   * Toast position. Below 768px (bottom navigation shown) toasts sit above the nav; from 768px
+   * (sidebar layout) 24px from the bottom. `--toast-lift` is raised while the floating selection
+   * bar is shown on phones, so a toast (often with Undo) never covers it.
+   */
+  --toast-lift: 0px;
+  --toast-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 0.75rem + var(--toast-lift));
+  @media (min-width: 48rem) {
+    --toast-bottom: 1.5rem;
+  }
 }
 
 /* Dark theme. */

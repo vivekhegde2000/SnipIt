@@ -276,8 +276,11 @@ menu is open. `Mod` = `Ctrl` on Windows/Linux and `⌘` on macOS.
 | `C` | Copy the focused snippet |
 | `E` / `F` / `D` | Edit / favorite / duplicate the focused snippet |
 | `Delete` | Delete the focused snippet (with Undo) |
+| `X` | Select / deselect the focused snippet (Phase 1.5) |
+| `Mod+A` | Select every listed snippet (library views and Trash) |
+| `V` | Switch between grid and list view |
 | `Mod+S` / `Mod+Enter` | Save in the editor |
-| `Esc` | Close dialog / panel / palette; clear search |
+| `Esc` | Close dialog / panel / palette; clear search; exit selection |
 | `G` then `A` / `F` / `R` / `C` / `T` / `S` | Go to All / Favorites / Recent / Collections / Trash / Settings |
 | `?` | Shortcut cheat sheet |
 
@@ -342,18 +345,25 @@ src/
 │  └─ EmptyState.tsx  PageHeader.tsx  ColorDot.tsx  Kbd.tsx  Logo.tsx  OfflineBadge.tsx
 ├─ features/
 │  ├─ library/                # LibraryProvider (live data + counts + tags)
+│  ├─ selection/              # multi-select store (per-card subscriptions), SelectionProvider
+│  │                          #   (Mod+A / Esc, cleared on page change), use-selectable-item
+│  │                          #   (click/Shift/Ctrl/X/long press), SelectionCheckbox, SelectionBar
 │  ├─ snippets/
 │  │  ├─ actions/             # use-snippet-actions (copy, favorite, move, share, delete+undo…),
 │  │  │                       #   copy-snippet, SnippetActionsMenu, snippet-shortcuts
+│  │  ├─ bulk/                # lazy BulkActionBar, BulkTagsPopover, use-bulk-actions, bulk-loader
 │  │  ├─ template/            # TemplateFillProvider + lazy TemplateFillDialog, remembered values
 │  │  ├─ code/                # language loaders, shared syntax highlighter, CodeBlock
 │  │  ├─ detail/              # SnippetDetailHost/Sheet, URL-driven detail state
 │  │  ├─ editor/              # SnippetEditorProvider/Dialog, lazy CodeEditor, selects
-│  │  ├─ components/          # SnippetCard, SnippetGrid, SnippetToolbar, TagFilter, LibraryWelcome
+│  │  ├─ components/          # SnippetCard, SnippetRow (list view), SnippetMeta, SnippetGrid,
+│  │  │                       #   SnippetToolbar, ViewControls, TagFilter, LibraryWelcome
+│  │  ├─ view-layout.ts       # grid/list preference (per device, synced across tabs)
 │  │  ├─ hooks/               # use-snippet-query (URL state), use-search-text
 │  │  ├─ lib/                 # select-snippets (view/filter/sort), snippet-search (Fuse)
 │  │  └─ pages/               # SnippetsPage (all / favorites / recent / collection)
-│  ├─ collections/            # CollectionsPage, editor (dialog, provider), actions menu
+│  ├─ collections/            # CollectionsPage (lazy; dnd-kit reordering), editor (dialog,
+│  │                          #   provider), actions menu (incl. Move up/down), use-collection-order
 │  ├─ commands/               # CommandPalette, ShortcutsDialog, global shortcuts, registry
 │  ├─ settings/               # SettingsPage, DeleteAllDataDialog, StorageSection, use-settings
 │  ├─ backup/                 # BackupProvider (file picker, drag & drop, import dialog host),
@@ -371,8 +381,10 @@ src/
 ├─ hooks/                     # use-media-query, use-document-title, use-delayed-flag,
 │                             #   use-online-status, use-hide-on-scroll
 ├─ lib/                       # clipboard, download, keyboard, motion, layout, storage, platform,
-│                             #   dates, field-ids, persistent-storage, initial-screen, utils
-├─ index.css                  # Tailwind + design tokens (light/dark, syntax colours)
+│                             #   dates, field-ids, persistent-storage, initial-screen,
+│                             #   after-paint (warm lazy chunks when idle), utils
+├─ index.css                  # Tailwind + design tokens (light/dark, syntax colours, toast offset)
+├─ zod-config.ts              # zod `jitless` — main.tsx's first import, bundled with zod (CSP)
 └─ main.tsx
 ```
 
@@ -582,10 +594,10 @@ Split into two days so each can be reviewed and deployed on its own.
 - [x] Template variables `{{name}}` with a fill-in form before copy
 - [x] Share snippet via URL (lz-string)
 
-**Day 5 — large-library tools**
-- [ ] Bulk select actions
-- [ ] Grid/list toggle
-- [ ] dnd-kit collection ordering
+**Day 5 — large-library tools ✅**
+- [x] Bulk select actions (library views and Trash)
+- [x] Grid/list toggle
+- [x] dnd-kit collection ordering (plus Move up / Move down)
 
 **Implementation notes (Day 4)**
 - **No schema or backup-format change.** The Dexie schema stays at version 1 and backups at
@@ -650,6 +662,86 @@ Split into two days so each can be reviewed and deployed on its own.
     horizontal overflow.
   - Day 2 and Day 3 regression suites pass (the Day 2 suite updated only for the new delete
     message). No console errors.
+
+**Implementation notes (Day 5)**
+
+Decisions agreed before building: the selection is **kept** while searching and filtering;
+collections are reordered **on the Collections page only**; **grid** is the default view on every
+device. Still no schema or backup-format change (Dexie version 1, backups `version: 1`).
+
+- **Selecting snippets:**
+  - Ways in: the **Select** button (page header), Ctrl/⌘-click or Shift-click a card, `X` on the
+    focused card, or **press and hold** (450 ms) on a touch screen. In selection mode a click
+    or tap selects instead of opening.
+  - Shift-click selects a range in display order. `Mod+A` selects everything the current
+    search and filters list, not only the cards rendered so far. `Esc` or ✕ exits.
+  - With a mouse, a round tick appears on a card's corner on hover. On touch screens it
+    appears in selection mode only.
+  - The selection survives search and filter changes. The bar says how many selected snippets
+    are hidden (for example "2 hidden by filters"). It is cleared when you change page.
+  - The state is a small external store: each card subscribes to its own "selected" flag, so
+    selecting one card re-renders that card and the bar, not the grid.
+- **The action bar** floats centred over the content: above the bottom navigation on phones,
+  clear of the sidebar or rail on larger screens.
+  - Actions: **Move** (incl. "New collection…"), **Tags** (add to all, remove from all),
+    **Favorite/Unfavorite**, **Export** (an importable file with the snippets' collections) and
+    **Delete**.
+  - Phones show Move, Tags and Delete. Favorite, Export and Select all are in a "More" menu, so
+    the bar fits 360 px.
+  - On phones, toasts are lifted above the bar while it is shown (`--toast-lift`), so an Undo
+    toast never covers it.
+- **Bulk writes** (`snippetRepository.bulkUpdate`, `revertBulkUpdate`, `softDeleteMany`,
+  `restoreMany`, `deleteForeverMany`):
+  - Each is one transaction, so a batch is all or nothing.
+  - Snippets the change doesn't alter are **not written**, so their `updatedAt` (which decides
+    Phase 2 sync conflicts) is untouched. A change that alters nothing says "Nothing to change".
+  - Undo puts back exactly the fields that changed. If a collection was deleted in the
+    meantime, those snippets come back unsorted.
+  - Adding tags respects the 20-tag limit. The toast says how many snippets couldn't take every
+    tag.
+  - Delete moves to the Trash with one Undo for the batch. In the Trash, **Restore** and
+    **Delete forever** (confirmed) work on a selection.
+- **Grid/list toggle:**
+  - The switch is in the page header; `V` and the command palette also toggle it. It is
+    remembered per device (`localStorage`) and synced across tabs.
+  - List rows show the title, a one-line preview, collection, tags, meta, ⋯ and Copy. The same
+    shortcuts, selection and arrow-key navigation work as on cards (↑/↓ move one row).
+- **Collection ordering:**
+  - Drag a tile by its handle on the Collections page, with mouse, touch or keyboard (Space to
+    pick up, arrows, Space to drop, Esc to cancel). Screen-reader announcements name the
+    collection and its position.
+  - Every ⋯ menu (sidebar, collection page, tiles) also has **Move up / Move down**.
+  - `collectionRepository.reorder()` rewrites only the positions that changed (with
+    `updatedAt`, so the order syncs in Phase 2). Each move has an Undo.
+  - The new order shows everywhere: sidebar, rail, drawer, pickers and filters.
+- **Bundle:** startup JS +0.8 KB gzip (app chunk 84.2 → 85.0 KB).
+  - The Collections page became a lazy route, and dnd-kit (MIT) loads only with it (16.4 KB
+    gzip chunk).
+  - The bulk bar (2.8 KB) and the shared bar pieces (1.4 KB) are lazy too. They are warmed
+    after the library has painted (`lib/after-paint.ts`, now shared with the editor preload).
+  - Everything is precached for offline use.
+- **Fixes found while verifying:**
+  - **CSP:** every start-up logged a `script-src` (eval) violation. This was already true before
+    Day 5. zod probes `new Function` when the first schema is built, and that happened before
+    `z.config({ jitless: true })` ran: ES modules evaluate their imports first, and the bundler
+    runs shared chunks before `main`.
+    - The setting moved to `src/zod-config.ts`, which is `main.tsx`'s first import and is
+      bundled into zod's own chunk (`vite.config.ts`). Start-up is now free of violations.
+  - **Phone layout:** a list row with a long one-line preview was wider than the screen. Grid
+    items now use `minmax(0, 1fr)` tracks, so text truncates instead. The same fix applies to
+    collection tiles with long names.
+  - **Toasts:** between 600 and 767 px, toasts sat on the bottom navigation. Their offset is now
+    one CSS variable (`--toast-bottom`) for every width.
+- **Verified** on the production build in Edge, by scripted checks with the production CSP
+  enforced (not committed):
+  - 98 Day 5 checks: every way in and out of selection, the selection kept while searching,
+    each bulk action verified in IndexedDB together with its Undo, no-op writes, the tag limit,
+    the export file, Trash bulk restore and delete, keyboard, mouse and menu reordering
+    (incl. the screen-reader announcement), grid/list persistence, long press on a 360 px
+    phone, and the bar's and toasts' placement.
+  - axe: 0 violations, light and dark, desktop and phone.
+  - No horizontal overflow at 1440, 1280, 1024, 768, 390 and 360 px. No console errors and
+    no CSP violations.
 
 ### Phase 1 definition of done
 The app is deployed on Netlify, is installable, works offline, every MVP feature (F1–F12) works on mobile

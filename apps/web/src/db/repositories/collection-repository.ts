@@ -68,6 +68,33 @@ export const collectionRepository = {
   },
 
   /**
+   * Saves a new display order. `orderedIds` lists active collections in the wanted order; any
+   * active collection missing from it (e.g. created in another tab meanwhile) keeps its relative
+   * place after them. Only collections whose position changed are written. Returns the previous
+   * order, which can be passed back here to undo.
+   */
+  async reorder(orderedIds: readonly string[]): Promise<string[]> {
+    return db.transaction('rw', db.collections, async () => {
+      const all = await db.collections.toArray()
+      const active = all.filter((c) => c.deletedAt === null).sort(byOrder)
+      const previous = active.map((c) => c.id)
+      const byId = new Map(active.map((c) => [c.id, c]))
+      const wanted = [...new Set(orderedIds)].filter((id) => byId.has(id))
+      const rest = previous.filter((id) => !wanted.includes(id))
+      const now = Date.now()
+      const updates: Collection[] = []
+      ;[...wanted, ...rest].forEach((id, index) => {
+        const collection = byId.get(id)
+        if (collection && collection.sortOrder !== index) {
+          updates.push({ ...collection, sortOrder: index, updatedAt: now })
+        }
+      })
+      await db.collections.bulkPut(updates)
+      return previous
+    })
+  },
+
+  /**
    * Soft-deletes the collection. Its active snippets are kept and become unsorted.
    * Returns the ids of those snippets so the deletion can be undone with {@link restore}.
    *

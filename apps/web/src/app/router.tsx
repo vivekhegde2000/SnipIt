@@ -1,5 +1,4 @@
 import { createBrowserRouter } from 'react-router'
-import { CollectionsPage } from '@/features/collections/pages/CollectionsPage'
 import { SnippetsPage } from '@/features/snippets/pages/SnippetsPage'
 import { AppLayout } from './layout/AppLayout'
 import { NotFoundPage } from './pages/NotFoundPage'
@@ -13,7 +12,14 @@ export const router = createBrowserRouter([
       { index: true, element: <SnippetsPage view="all" /> },
       { path: 'favorites', element: <SnippetsPage view="favorites" /> },
       { path: 'recent', element: <SnippetsPage view="recent" /> },
-      { path: 'collections', element: <CollectionsPage /> },
+      {
+        path: 'collections',
+        // Lazy so drag-and-drop (dnd-kit) stays out of the startup bundle; precached for offline.
+        lazy: () =>
+          import('@/features/collections/pages/CollectionsPage').then((m) => ({
+            Component: m.CollectionsPage,
+          })),
+      },
       { path: 'collections/:collectionId', element: <SnippetsPage view="collection" /> },
       // Trash and shared links are occasional destinations: lazy chunks, precached for offline use.
       {

@@ -17,10 +17,10 @@ export function App() {
             // (often with an Undo action) never cover their primary buttons.
             position="bottom-left"
             closeButton
-            // Keep toasts clear of the mobile bottom navigation.
-            mobileOffset={{
-              bottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 0.75rem)',
-            }}
+            // Clear of the bottom navigation (and the selection bar) on phones; see
+            // `--toast-bottom` in index.css. Same value for both, so 600–767px is covered too.
+            offset={{ bottom: 'var(--toast-bottom)' }}
+            mobileOffset={{ bottom: 'var(--toast-bottom)' }}
           />
           <PwaUpdater />
         </TooltipProvider>

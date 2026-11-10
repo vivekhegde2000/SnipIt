@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react'
-import { Download, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Download, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { Collection } from '@snipit/shared'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,8 +10,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useBackup } from '@/features/backup/backup-context'
+import { useLibrary } from '@/features/library/library-context'
 import { cn } from '@/lib/utils'
 import { useCollectionEditor } from '../editor/collection-editor-context'
+import { useCollectionOrder } from '../use-collection-order'
 
 type CollectionActionsMenuProps = {
   collection: Collection
@@ -20,7 +22,34 @@ type CollectionActionsMenuProps = {
   align?: 'start' | 'end'
 }
 
-/** "⋯" menu for a collection: edit (rename / colour / icon), export and delete. */
+/**
+ * Move up / Move down — the non-drag way to reorder. Only mounted while the menu is open, so the
+ * library subscription lives here instead of in every sidebar row.
+ */
+function MoveItems({ collection }: { collection: Collection }) {
+  const { collections } = useLibrary()
+  const order = useCollectionOrder()
+  const index = collections.findIndex((c) => c.id === collection.id)
+  if (collections.length < 2 || index === -1) return null
+  return (
+    <>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem disabled={index === 0} onSelect={() => void order.move(collection.id, -1)}>
+        <ArrowUp aria-hidden="true" />
+        Move up
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        disabled={index === collections.length - 1}
+        onSelect={() => void order.move(collection.id, 1)}
+      >
+        <ArrowDown aria-hidden="true" />
+        Move down
+      </DropdownMenuItem>
+    </>
+  )
+}
+
+/** "⋯" menu for a collection: edit (rename / colour / icon), export, reorder and delete. */
 export function CollectionActionsMenu({
   collection,
   triggerClassName,
@@ -53,6 +82,7 @@ export function CollectionActionsMenu({
           <Download aria-hidden="true" />
           Export collection
         </DropdownMenuItem>
+        <MoveItems collection={collection} />
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onSelect={() => remove(collection)}>
           <Trash2 aria-hidden="true" />

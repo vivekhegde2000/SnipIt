@@ -6,7 +6,7 @@ import type { Collection } from '@snipit/shared'
 import { getErrorMessage } from '@/db'
 import { TRANSITION } from '@/lib/motion'
 import { BackupContext, type BackupApi } from './backup-context'
-import { exportCollection, exportLibrary } from './lib/backup-io'
+import { exportCollection, exportLibrary, exportSnippets } from './lib/backup-io'
 
 // Only needed once a file is chosen; keeps parsing/preview code out of the startup bundle.
 const ImportDialog = lazy(() =>
@@ -50,6 +50,19 @@ export function BackupProvider({ children }: { children: ReactNode }) {
           toast.success(`Exported “${collection.name}”`, { description: plural(result.snippets, 'snippet') })
         } catch (error) {
           toast.error(getErrorMessage(error, 'Could not export the collection.'))
+        }
+      },
+      exportSnippets: async (snippets) => {
+        try {
+          const result = await exportSnippets(snippets)
+          toast.success(`Exported ${plural(result.snippets, 'snippet')}`, {
+            description:
+              result.collections > 0
+                ? `With ${plural(result.collections, 'collection')}. Import the file to restore them.`
+                : 'Import the file to restore them.',
+          })
+        } catch (error) {
+          toast.error(getErrorMessage(error, 'Could not export the snippets.'))
         }
       },
       chooseImportFile: () => inputRef.current?.click(),

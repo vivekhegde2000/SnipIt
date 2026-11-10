@@ -34,8 +34,13 @@ copy it with one click. It works offline, installs like an app and keeps your da
 - **Share by link:** the snippet is compressed into the link itself, so nothing is uploaded.
   The recipient can copy it or save it to their own library.
 - **Collections** with colours and icons, **Favorites** and **Recent** views, and a **Trash**
-  that keeps deleted snippets restorable for 30 days.
-- **Backup and restore:** export the whole library or one collection as JSON. Importing previews
+  that keeps deleted snippets restorable for 30 days. Drag collections into the order you want
+  (mouse, touch or keyboard).
+- **Bulk actions:** select many snippets (click **Select**, Shift-click a range, `Ctrl A`, or press
+  and hold on a phone), then move, retag, favorite, export or delete them in one go, each with
+  one Undo. The Trash can restore or delete a selection.
+- **Grid or list:** cards with a code preview, or compact rows that fit far more on screen.
+- **Backup and restore:** export the whole library, one collection or a selection as JSON. Importing previews
   the changes first and either merges (newest edit wins) or replaces. Files can be dropped
   anywhere on the page.
 - **Works offline and installs as an app** on desktop and mobile (PWA), with an in-app
@@ -58,8 +63,10 @@ Press `?` in the app for the full list.
 | Next / previous snippet     | `J` / `K`, or the arrow keys   |
 | Focused snippet: open, copy, edit | `Enter` or `O`, `C`, `E` |
 | Focused snippet: favorite, duplicate, delete | `F`, `D`, `Del` |
+| Select the focused snippet / select all listed | `X` / `Ctrl A`  |
+| Grid or list view           | `V`                            |
 | Save in the editor          | `Ctrl S` or `Ctrl Enter`       |
-| Close / clear search        | `Esc`                          |
+| Close / clear search / exit selection | `Esc`                |
 
 ## Tech stack
 
@@ -74,6 +81,7 @@ All libraries are free and open source.
 | Editor        | CodeMirror 6 (lazy-loaded, grammars loaded per language)                  |
 | Forms         | react-hook-form + zod                                                     |
 | Share links   | lz-string (loaded only when sharing)                                      |
+| Reordering    | dnd-kit (loaded only with the Collections page)                           |
 | PWA           | vite-plugin-pwa (Workbox), `@vite-pwa/assets-generator`                   |
 | Quality       | oxlint, Prettier                                                          |
 | Hosting       | Netlify                                                                   |
@@ -118,7 +126,8 @@ Every push to `main` deploys automatically, and pull requests get deploy preview
 ```
 apps/web/          React PWA
   src/app/         App shell, routing, layout, theme, motion setup
-  src/features/    Feature modules: snippets, collections, commands, backup, pwa, settings, library
+  src/features/    Feature modules: snippets, collections, selection, commands, backup, trash,
+                   share, pwa, settings, library
   src/components/  Shared UI (shadcn/ui primitives in components/ui)
   src/db/          Dexie database and repositories
   src/hooks/ lib/  Shared hooks and utilities
@@ -149,8 +158,8 @@ failing the whole import.
 
 - **Phase 1, the local-first PWA:** done (Days 1–3) and live on Netlify. See
   [docs/phase-1-frontend.md](docs/phase-1-frontend.md).
-- **Phase 1.5, stretch features:** Trash, templates and share links are done (Day 4). Bulk
-  actions, a grid/list toggle and collection ordering come next (Day 5).
+- **Phase 1.5, stretch features:** done. Trash, templates and share links (Day 4); bulk
+  actions, a grid/list toggle and collection ordering (Day 5).
 - **Phase 2, accounts and multi-device sync:** Node.js, Express, Prisma and PostgreSQL. See
   [docs/phase-2-backend.md](docs/phase-2-backend.md).
 

@@ -1,4 +1,4 @@
-import type { Collection } from '@snipit/shared'
+import type { Collection, Snippet } from '@snipit/shared'
 import { db, settingsRepository } from '@/db'
 import { downloadTextFile, slugify } from '@/lib/download'
 import { backupFileName, createBackup, type ParsedBackup } from './backup-format'
@@ -54,4 +54,22 @@ export async function exportCollection(collection: Collection): Promise<ExportRe
     'application/json',
   )
   return { snippets: backup.snippets.length, collections: 1 }
+}
+
+/**
+ * Downloads a hand-picked set of snippets (bulk "Export"), with the collections they belong to so
+ * an import recreates them. Like a collection export, it doesn't count as a full backup.
+ */
+export async function exportSnippets(snippets: readonly Snippet[]): Promise<ExportResult> {
+  const collectionIds = [...new Set(snippets.flatMap((s) => (s.collectionId ? [s.collectionId] : [])))]
+  const collections = (await db.collections.bulkGet(collectionIds)).filter(
+    (collection): collection is Collection => collection !== undefined,
+  )
+  const backup = createBackup(collections, snippets)
+  downloadTextFile(
+    backupFileName(new Date(), 'selection'),
+    JSON.stringify(backup, null, 2),
+    'application/json',
+  )
+  return { snippets: backup.snippets.length, collections: backup.collections.length }
 }

@@ -30,7 +30,14 @@ const vendorChunks = [
     test: /node_modules[\\/](react|react-dom|scheduler|react-router)[\\/]/,
     priority: 30,
   },
-  { name: 'vendor-data', test: /node_modules[\\/](dexie|dexie-react-hooks|zod)[\\/]/, priority: 20 },
+  {
+    name: 'vendor-data',
+    // `src/zod-config.ts` rides along with zod: chunks run before the code that imports them, so
+    // only inside zod's own chunk is `jitless` guaranteed to be set before any schema is built
+    // (otherwise zod probes `new Function`, which the CSP reports as a violation).
+    test: /node_modules[\\/](dexie|dexie-react-hooks|zod)[\\/]|[\\/]src[\\/]zod-config\.ts$/,
+    priority: 20,
+  },
   {
     name: 'vendor-ui',
     test: /node_modules[\\/](radix-ui|@radix-ui|@floating-ui|sonner|cn)[\\/]/,

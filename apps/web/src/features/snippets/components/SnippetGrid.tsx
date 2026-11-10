@@ -4,10 +4,12 @@ import type { Collection, Snippet } from '@snipit/shared'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useEntranceAnimation } from '@/lib/initial-screen'
 import { focusAdjacentCard, isEditableTarget } from '@/lib/keyboard'
-import { SNIPPET_GRID } from '@/lib/layout'
+import { SNIPPET_GRID, SNIPPET_LIST } from '@/lib/layout'
 import { STAGGER_LIMIT, STAGGER_STEP, TRANSITION } from '@/lib/motion'
 import { useSnippetEditor } from '../editor/snippet-editor-context'
+import type { ViewLayout } from '../view-layout'
 import { SnippetCard } from './SnippetCard'
+import { SnippetRow } from './SnippetRow'
 
 /** Cards rendered per batch; more are added just before the user scrolls to the end. */
 const PAGE_SIZE = 48
@@ -40,9 +42,14 @@ type SnippetGridProps = {
   titleMatches?: ReadonlyMap<string, TitleMatches>
   /** Changes whenever the query/view changes; resets incremental rendering to the first batch. */
   resetKey: string
+  /** Cards in a fluid grid, or compact rows. */
+  layout?: ViewLayout
 }
 
-/** Arrow keys move between cards: ←/→ by one, ↑/↓ by a whole row of the fluid grid. */
+/**
+ * Arrow keys move between cards: ←/→ by one, ↑/↓ by a whole row of the fluid grid (in the list
+ * layout there is one column, so ↑/↓ move one row).
+ */
 function handleGridKeyDown(event: KeyboardEvent<HTMLUListElement>) {
   if (event.altKey || event.ctrlKey || event.metaKey || isEditableTarget(event.target)) return
   if ((event.target as HTMLElement).closest('[role="menu"]')) return
@@ -68,7 +75,9 @@ export const SnippetGrid = memo(function SnippetGrid({
   collectionsById,
   titleMatches,
   resetKey,
+  layout = 'grid',
 }: SnippetGridProps) {
+  const Item = layout === 'list' ? SnippetRow : SnippetCard
   const { preload } = useSnippetEditor()
   const [limit, setLimit] = useState(PAGE_SIZE)
   // What the last committed render showed, to classify changes ("adjust state while rendering").
@@ -106,10 +115,16 @@ export const SnippetGrid = memo(function SnippetGrid({
 
   return (
     <>
-      <ul className={SNIPPET_GRID} aria-label="Snippets" onKeyDown={handleGridKeyDown}>
+      <ul
+        className={layout === 'list' ? SNIPPET_LIST : SNIPPET_GRID}
+        aria-label="Snippets"
+        onKeyDown={handleGridKeyDown}
+      >
         <AnimatePresence initial={animate && enterOnMount} custom={instantExit || !animate}>
           {shown.map((snippet, index) => (
-            // `grid` makes the card fill the row height, so cards in a row line up.
+            // `grid` makes the card fill the row height, so cards in a row line up. Its single
+            // `minmax(0, 1fr)` column (grid-cols-1) lets a card or row shrink below its content's
+            // width: an `auto` track would size to a long truncated preview line and overflow.
             <m.li
               key={snippet.id}
               variants={cardVariants}
@@ -120,9 +135,9 @@ export const SnippetGrid = memo(function SnippetGrid({
                 ...TRANSITION.base,
                 delay: initialIds.has(snippet.id) ? index * STAGGER_STEP : 0,
               }}
-              className="grid"
+              className="grid min-w-0 grid-cols-1"
             >
-              <SnippetCard
+              <Item
                 snippet={snippet}
                 collection={snippet.collectionId ? collectionsById.get(snippet.collectionId) : undefined}
                 titleMatches={titleMatches?.get(snippet.id)}
@@ -143,7 +158,23 @@ export const SnippetGrid = memo(function SnippetGrid({
   )
 })
 
-export function SnippetGridSkeleton({ count = 6 }: { count?: number }) {
+export function SnippetGridSkeleton({ count = 6, layout = 'grid' }: { count?: number; layout?: ViewLayout }) {
+  if (layout === 'list') {
+    return (
+      <div className={SNIPPET_LIST} role="status" aria-label="Loading snippets">
+        {Array.from({ length: count + 2 }, (_, index) => (
+          <div key={index} className="flex items-center gap-3 rounded-xl border bg-card p-3">
+            <Skeleton className="size-6 rounded-full" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-3 w-2/3" />
+            </div>
+            <Skeleton className="h-8 w-20 rounded-lg" />
+          </div>
+        ))}
+      </div>
+    )
+  }
   return (
     <div className={SNIPPET_GRID} role="status" aria-label="Loading snippets">
       {Array.from({ length: count }, (_, index) => (

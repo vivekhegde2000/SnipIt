@@ -1,6 +1,7 @@
 /**
  * Keyboard shortcut reference, rendered by the cheat sheet (`?`). Keep in sync with
- * `use-global-shortcuts.ts` (global keys) and `snippet-shortcuts.ts` (focused-snippet keys).
+ * `use-global-shortcuts.ts` (global keys), `snippet-shortcuts.ts` (focused-snippet keys) and
+ * `features/selection` (X, Mod+A, Esc while selecting).
  * The token `Mod` renders as ⌘ on Apple platforms and Ctrl elsewhere.
  */
 export type ShortcutItem = {
@@ -20,6 +21,7 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
       { label: 'Command palette', keys: [['Mod', 'K']] },
       { label: 'Search snippets', keys: [['/']] },
       { label: 'New snippet', keys: [['N']] },
+      { label: 'Grid / list view', keys: [['V']] },
       { label: 'Keyboard shortcuts', keys: [['?']] },
       { label: 'Close / clear search', keys: [['Esc']] },
     ],
@@ -46,6 +48,15 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
       { label: 'Favorite', keys: [['F']] },
       { label: 'Duplicate', keys: [['D']] },
       { label: 'Delete', keys: [['Del']] },
+    ],
+  },
+  {
+    title: 'Selecting',
+    items: [
+      { label: 'Select / deselect focused snippet', keys: [['X']] },
+      { label: 'Select a range', keys: [['Shift', 'Click']] },
+      { label: 'Select all listed', keys: [['Mod', 'A']] },
+      { label: 'Exit selection', keys: [['Esc']] },
     ],
   },
   {

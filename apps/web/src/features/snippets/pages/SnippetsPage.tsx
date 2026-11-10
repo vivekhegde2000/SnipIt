@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo } from 'react'
+import { Suspense, lazy, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { Clock, FolderOpen, FolderX, Plus, SearchX, Star } from 'lucide-react'
 import { ColorDot } from '@/components/ColorDot'
@@ -9,11 +9,15 @@ import { Button } from '@/components/ui/button'
 import { BackupReminder } from '@/features/backup/components/BackupReminder'
 import { CollectionActionsMenu } from '@/features/collections/components/CollectionActionsMenu'
 import { useLibrary } from '@/features/library/library-context'
+import { useSelectableOrder, useSelectionActive } from '@/features/selection/selection-context'
 import { useDelayedFlag } from '@/hooks/use-delayed-flag'
 import { useDocumentTitle } from '@/hooks/use-document-title'
+import { runAfterPaint } from '@/lib/after-paint'
+import { loadBulkActionBar, preloadBulkActionBar } from '../bulk/bulk-loader'
 import { LibraryWelcome } from '../components/LibraryWelcome'
 import { SnippetGrid, SnippetGridSkeleton } from '../components/SnippetGrid'
 import { SnippetToolbar } from '../components/SnippetToolbar'
+import { LayoutToggle, SelectButton } from '../components/ViewControls'
 import { useSearchText } from '../hooks/use-search-text'
 import { useSnippetQuery } from '../hooks/use-snippet-query'
 import {
@@ -26,8 +30,12 @@ import {
 } from '../lib/select-snippets'
 import { createSnippetIndex, searchSnippets, type SearchHit } from '../lib/snippet-search'
 import { useNewSnippet, type NewSnippetTrigger } from '../use-new-snippet'
+import { useViewLayout } from '../view-layout'
 
 type ViewKind = SnippetView['kind']
+
+/** Lazy: only needed once something is selected; warmed after the library has painted. */
+const BulkActionBar = lazy(() => loadBulkActionBar().then((m) => ({ default: m.BulkActionBar })))
 
 type SnippetsPageProps = {
   view: ViewKind
@@ -54,6 +62,12 @@ export function SnippetsPage({ view: viewKind }: SnippetsPageProps) {
   const deferredSearch = useDeferredValue(searchText.trim())
   // IndexedDB usually answers in a few ms; only show a skeleton if it is genuinely slow.
   const showSkeleton = useDelayedFlag(isLoading)
+  const layout = useViewLayout()
+  const selectionActive = useSelectionActive()
+  // Once loaded, the bar stays mounted so it can animate out when selection ends.
+  const [barRequested, setBarRequested] = useState(false)
+  if (selectionActive && !barRequested) setBarRequested(true)
+  useEffect(() => (isLoading ? undefined : runAfterPaint(preloadBulkActionBar)), [isLoading])
 
   const collection = viewKind === 'collection' && collectionId ? collectionsById.get(collectionId) : undefined
 
@@ -83,6 +97,11 @@ export function SnippetsPage({ view: viewKind }: SnippetsPageProps) {
     [snippets, view, effectiveQuery],
   )
 
+  // Display order for Shift-range selection and Select all (the whole filtered list, not only the
+  // cards rendered so far).
+  const visibleIds = useMemo(() => visible.map((snippet) => snippet.id), [visible])
+  useSelectableOrder(visibleIds)
+
   // Any change to what is listed restarts incremental rendering at the first batch.
   const gridResetKey = useMemo(() => JSON.stringify([view, effectiveQuery]), [view, effectiveQuery])
 
@@ -97,7 +116,7 @@ export function SnippetsPage({ view: viewKind }: SnippetsPageProps) {
   useDocumentTitle(title)
 
   if (isLoading) {
-    return showSkeleton ? <SnippetGridSkeleton /> : null
+    return showSkeleton ? <SnippetGridSkeleton layout={layout} /> : null
   }
 
   if (snippets.length === 0) {
@@ -152,6 +171,8 @@ export function SnippetsPage({ view: viewKind }: SnippetsPageProps) {
         description={<span aria-live="polite">{description}</span>}
         actions={
           <>
+            <SelectButton />
+            <LayoutToggle />
             {collection && <CollectionActionsMenu collection={collection} triggerSize="icon" />}
             {/* Phones use the floating button instead. */}
             <Button className="hidden md:inline-flex" {...newSnippet.triggerProps}>
@@ -193,7 +214,16 @@ export function SnippetsPage({ view: viewKind }: SnippetsPageProps) {
           collectionsById={collectionsById}
           titleMatches={titleMatches}
           resetKey={gridResetKey}
+          layout={layout}
         />
+      )}
+
+      {/* Room for the floating selection bar, so it never covers the last row. */}
+      {selectionActive && <div aria-hidden="true" className="h-16" />}
+      {barRequested && (
+        <Suspense fallback={null}>
+          <BulkActionBar visibleIds={visibleIds} />
+        </Suspense>
       )}
     </div>
   )
